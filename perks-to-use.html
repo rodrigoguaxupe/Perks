@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Perks to Use — Rodrigo & Karina</title>
+<link rel="manifest" href="data:application/json,{%22name%22:%22Perks%20to%20Use%22,%22short_name%22:%22Perks%22,%22display%22:%22standalone%22,%22start_url%22:%22.%22,%22background_color%22:%22%23FAF7F0%22,%22theme_color%22:%221B2430%22}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<style>
+  :root{
+    --ink:#1B2430;
+    --ink-soft:#3B4656;
+    --paper:#FAF7F0;
+    --paper-dim:#F1ECE0;
+    --line:#DAD3C2;
+    --brass:#A9803F;
+    --brass-deep:#8A6A32;
+    --rust:#AE4A38;
+    --sage:#4F7355;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:15px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{
+    font-family:'Source Serif 4', serif;
+    color:var(--ink);
+    margin:0;
+  }
+  a{color:var(--brass-deep);}
+  button{font-family:inherit;}
+  #app{max-width:760px;margin:0 auto;padding:28px 20px 120px;}
+
+  /* ---- Hero ---- */
+  .hero{padding:8px 0 32px;border-bottom:1px solid var(--line);margin-bottom:32px;}
+  .hero h1{font-size:34px;font-weight:600;letter-spacing:-0.01em;}
+  .hero .lede{max-width:52ch;color:var(--ink-soft);margin-top:10px;font-size:14.5px;}
+  .hero-stats{display:flex;gap:28px;margin-top:24px;flex-wrap:wrap;}
+  .stat .num{font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;}
+  .stat .label{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .stat.warn .num{color:var(--rust);}
+  .stat.good .num{color:var(--sage);}
+
+  /* ---- Add panel ---- */
+  .add-panel{background:var(--paper-dim);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:36px;}
+  .add-panel h2{font-size:19px;margin-bottom:4px;}
+  .add-panel .hint{color:var(--ink-soft);font-size:13px;margin-bottom:14px;}
+  .add-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .add-row input[type=text]{
+    flex:1;min-width:180px;padding:10px 12px;border:1px solid var(--line);border-radius:6px;
+    background:var(--paper);font-family:inherit;font-size:14.5px;color:var(--ink);
+  }
+  .add-row select{padding:10px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);font-family:inherit;font-size:14.5px;}
+  .btn{
+    padding:10px 16px;border-radius:6px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);
+    font-family:inherit;font-size:14px;cursor:pointer;white-space:nowrap;
+  }
+  .btn:hover{background:var(--ink-soft);}
+  .btn.secondary{background:transparent;color:var(--ink);border:1px solid var(--line);}
+  .btn.secondary:hover{border-color:var(--ink);}
+  .btn.small{padding:5px 10px;font-size:12.5px;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .add-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px;}
+  .claude-link{font-size:13px;color:var(--ink-soft);text-decoration:none;border-bottom:1px dashed var(--line);}
+  .claude-link:hover{color:var(--brass-deep);border-color:var(--brass-deep);}
+
+  /* ---- Review screen ---- */
+  #reviewScreen{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;}
+  .review-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+  .review-head h3{font-size:17px;}
+  .review-source{font-size:12px;color:var(--ink-soft);margin-bottom:14px;}
+  .review-item{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:8px;background:var(--paper);}
+  .review-item.excluded{opacity:.4;}
+  .review-item-top{display:flex;gap:10px;align-items:flex-start;}
+  .review-item-top input[type=checkbox]{margin-top:4px;}
+  .review-fields{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;}
+  .review-fields input, .review-fields select{
+    font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:5px;background:var(--paper);width:100%;
+  }
+  .review-fields .full{grid-column:1/-1;}
+  .field-label{font-size:10.5px;color:var(--ink-soft);display:block;margin-bottom:2px;}
+  .loading{color:var(--ink-soft);font-size:13.5px;padding:10px 0;}
+
+  /* ---- Categories ---- */
+  .category{margin-bottom:36px;}
+  .category h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-weight:600;margin-bottom:12px;}
+  .category h2 .count{color:var(--line);font-weight:400;}
+  .item-card{border:1px solid var(--line);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;background:var(--paper);}
+  .item-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;gap:10px;}
+  .item-head:hover{background:var(--paper-dim);}
+  .item-head-left{min-width:0;}
+  .item-name{font-family:'Source Serif 4',serif;font-size:18px;font-weight:600;}
+  .item-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .item-head-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .value-tag{font-size:12.5px;color:var(--brass-deep);font-weight:600;}
+  .chevron{transition:transform .15s ease;color:var(--ink-soft);}
+  .item-card.open .chevron{transform:rotate(90deg);}
+  .item-body{display:none;border-top:1px solid var(--line);padding:6px 16px 12px;}
+  .item-card.open .item-body{display:block;}
+
+  .benefit-row{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--paper-dim);align-items:flex-start;}
+  .benefit-row:last-child{border-bottom:none;}
+  .benefit-row input[type=checkbox]{margin-top:3px;width:16px;height:16px;accent-color:var(--sage);flex-shrink:0;}
+  .benefit-main{flex:1;min-width:0;}
+  .benefit-name-line{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .benefit-name{font-weight:600;}
+  .benefit-value{color:var(--brass-deep);font-weight:600;font-size:13.5px;}
+  .benefit-meta{font-size:12px;color:var(--ink-soft);margin-top:3px;}
+  .benefit-meta .flag{color:var(--rust);}
+  .benefit-how{font-size:12.5px;color:var(--ink-soft);margin-top:4px;line-height:1.5;}
+  .badge{display:inline-block;font-size:10.5px;padding:2px 6px;border-radius:4px;margin-left:6px;border:1px solid var(--line);color:var(--ink-soft);}
+  .badge.needs{color:var(--rust);border-color:var(--rust);}
+  .badge.used{color:var(--sage);border-color:var(--sage);}
+  .activate-toggle{font-size:11.5px;padding:3px 8px;border-radius:4px;border:1px solid var(--line);background:transparent;cursor:pointer;color:var(--ink-soft);margin-top:5px;}
+  .activate-toggle.on{border-color:var(--sage);color:var(--sage);}
+
+  .item-body-actions{display:flex;gap:14px;padding:10px 0 4px;font-size:12px;}
+  .item-body-actions button{background:none;border:none;color:var(--ink-soft);cursor:pointer;padding:0;text-decoration:underline;font-family:inherit;font-size:12px;}
+  .item-body-actions button:hover{color:var(--ink);}
+
+  .empty{color:var(--ink-soft);font-size:13.5px;border:1px dashed var(--line);border-radius:8px;padding:16px;text-align:center;}
+
+  @media (max-width:480px){
+    .review-fields{grid-template-columns:1fr;}
+    .hero-stats{gap:20px;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="hero">
+    <h1>Perks to Use</h1>
+    <p class="lede">Every card perk, credit, and membership Rodrigo &amp; Karina are owed — before it quietly expires.</p>
+    <div class="hero-stats">
+      <div class="stat good"><div class="num" id="statValue">—</div><div class="label">tracked annual value</div></div>
+      <div class="stat warn"><div class="num" id="statUnused">—</div><div class="label">unused this period</div></div>
+      <div class="stat"><div class="num" id="statCount">—</div><div class="label">things tracked</div></div>
+    </div>
+  </header>
+
+  <section class="add-panel">
+    <h2>Add something you own</h2>
+    <p class="hint">Type a card, membership, or account. Claude researches its current real benefits before anything gets saved.</p>
+    <div class="add-row">
+      <input type="text" id="itemNameInput" placeholder="e.g. Costco Membership, Delta SkyMiles Platinum" />
+      <select id="itemTypeSelect">
+        <option value="card">Card</option>
+        <option value="membership">Membership</option>
+        <option value="utility">Utility / Subscription</option>
+      </select>
+      <select id="itemOwnerSelect">
+        <option value="Shared">Shared</option>
+        <option value="Rodrigo">Rodrigo</option>
+        <option value="Karina">Karina</option>
+      </select>
+      <button class="btn" id="researchBtn">Research with AI</button>
+      <button class="btn secondary" id="manualBtn">Add manually</button>
+    </div>
+    <div class="add-footer">
+      <a class="claude-link" id="claudeLink" href="#" target="_blank" rel="noopener">Or ask Claude directly →</a>
+    </div>
+    <div id="reviewScreen" hidden></div>
+  </section>
+
+  <section class="categories" id="categories">
+    <div class="category" data-cat="card">
+      <h2>Cards <span class="count" id="count-card"></span></h2>
+      <div class="item-list" id="list-card"></div>
+    </div>
+    <div class="category" data-cat="membership">
+      <h2>Memberships <span class="count" id="count-membership"></span></h2>
+      <div class="item-list" id="list-membership"></div>
+    </div>
+    <div class="category" data-cat="utility">
+      <h2>Utilities &amp; subscriptions <span class="count" id="count-utility"></span></h2>
+      <div class="item-list" id="list-utility"></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ====================== CONFIG ======================
+   1. Create a Firebase project (or reuse one), enable Realtime Database.
+   2. Paste your config below.
+   3. Deploy the companion Cloud Run function and paste its URL below.
+======================================================= */
+const firebaseConfig = {
+  apiKey: "REPLACE_ME",
+  authDomain: "REPLACE_ME.firebaseapp.com",
+  databaseURL: "https://REPLACE_ME-default-rtdb.firebaseio.com",
+  projectId: "REPLACE_ME",
+  storageBucket: "REPLACE_ME.appspot.com",
+  messagingSenderId: "REPLACE_ME",
+  appId: "REPLACE_ME"
+};
+const RESEARCH_ENDPOINT = "REPLACE_ME_CLOUD_RUN_URL";
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const itemsRef = db.ref('items');
+
+/* ====================== SEED DATA ======================
+   Runs once if the database is empty. Real benefits researched
+   as of Sept 2026 for the three items already confirmed.
+========================================================= */
+const SEED = {
+  card_csr: {
+    name: "Chase Sapphire Reserve",
+    category: "card",
+    owner: "Rodrigo",
+    provider: "Chase",
+    annualFee: "$550/yr",
+    anniversaryDate: null,
+    benefits: {
+      b1: {name:"Annual travel credit", kind:"credit", value:"$300/yr", resetPeriod:"annual_anniversary", resetDetail:"Resets on your account anniversary, not Jan 1", activationRequired:false, howToUse:"Applies automatically to airfare, hotels, car rentals, cruises, taxis, tolls, parking.", notes:""},
+      b2: {name:"The Edit hotel credits", kind:"credit", value:"up to $500/yr (2 x $250)", resetPeriod:"annual_calendar", resetDetail:"Calendar year, fully flexible for 2026", activationRequired:false, howToUse:"Book a 2+ night prepaid \"Pay Now\" stay through Chase Travel's The Edit collection.", notes:"Also includes breakfast for two, a $100 property credit, and room upgrade when available."},
+      b3: {name:"Dining credit (Exclusive Tables)", kind:"credit", value:"$300/yr ($150 x2)", resetPeriod:"biannual", resetDetail:"Jan 1–Jun 30 and Jul 1–Dec 31", activationRequired:false, howToUse:"Book via OpenTable's Sapphire Reserve Exclusive Tables list and pay with the card.", notes:"Only at participating restaurants — coverage varies by city."},
+      b4: {name:"StubHub / viagogo credit", kind:"credit", value:"$300/yr ($150 x2)", resetPeriod:"biannual", resetDetail:"Jan 1–Jun 30 and Jul 1–Dec 31", activationRequired:true, activated:false, howToUse:"Activate once via Chase.com or the Chase app, then buy tickets directly on StubHub.com.", notes:"Excludes stubhub.co.uk and gift cards."},
+      b5: {name:"DoorDash credits + DashPass", kind:"credit", value:"up to $300/yr + free DashPass", resetPeriod:"monthly", resetDetail:"Monthly, no rollover", activationRequired:true, activated:false, howToUse:"Activate DashPass once in the Chase app, then pay with the card on DoorDash.", notes:"$5 off one restaurant order + two $10 off non-restaurant orders per month."},
+      b6: {name:"Lyft credit", kind:"credit", value:"$10/mo ($120/yr)", resetPeriod:"monthly", resetDetail:"Auto-applied 1st of each month, no rollover", activationRequired:false, howToUse:"Just pay for Lyft rides with the card.", notes:"5x points on Lyft too."},
+      b7: {name:"Peloton credit", kind:"credit", value:"$10/mo ($120/yr)", resetPeriod:"monthly", resetDetail:"Monthly toward an eligible membership", activationRequired:true, activated:false, howToUse:"One-time activation via Chase.com or the Chase app.", notes:""},
+      b8: {name:"Apple TV+ & Apple Music", kind:"perk", value:"Free (~$288/yr value)", resetPeriod:"ongoing", resetDetail:"Through June 2027", activationRequired:true, activated:false, howToUse:"Activate each service individually in the Chase Mobile app.", notes:"Suspends any existing paid subscription automatically."},
+      b9: {name:"Priority Pass + Sapphire Lounges", kind:"perk", value:"Unlimited, +2 guests", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"Show the card / Priority Pass app at the lounge.", notes:""},
+      b10:{name:"Global Entry / TSA PreCheck credit", kind:"credit", value:"Up to $120", resetPeriod:"one_time_year", resetDetail:"Every 4 years", activationRequired:false, howToUse:"Pay the application fee with the card.", notes:""}
+    }
+  },
+  card_primevisa: {
+    name: "Amazon Prime Visa",
+    category: "card",
+    owner: "Rodrigo",
+    provider: "Chase",
+    annualFee: "$0",
+    benefits: {
+      b1:{name:"Amazon / Whole Foods cash back", kind:"perk", value:"5% back, uncapped", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"Just pay with the card at Amazon.com or Whole Foods.", notes:"Requires an active Prime membership — drops to 3% without it."},
+      b2:{name:"Chase Travel bookings", kind:"perk", value:"5% back", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"Book flights/hotels/cars through Chase Travel.", notes:""},
+      b3:{name:"Gas, restaurants, transit", kind:"perk", value:"2% back", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"", notes:""},
+      b4:{name:"Everything else", kind:"perk", value:"1% back", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"", notes:""}
+    }
+  },
+  membership_prime: {
+    name: "Amazon Prime",
+    category: "membership",
+    owner: "Shared",
+    provider: "Amazon",
+    annualFee: "$139/yr",
+    benefits: {
+      b1:{name:"Grubhub+", kind:"perk", value:"Free (~$120/yr value)", resetPeriod:"ongoing", resetDetail:"", activationRequired:true, activated:false, howToUse:"Link your Amazon and Grubhub accounts once.", notes:"Waives delivery fees on orders over $12."},
+      b2:{name:"Fast shipping", kind:"perk", value:"Free 1–2 day on eligible items", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"", notes:""},
+      b3:{name:"Prime Video, Music, Gaming, Reading", kind:"perk", value:"Included", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"", notes:""},
+      b4:{name:"Alexa+", kind:"perk", value:"Free (normally $19.99/mo)", resetPeriod:"ongoing", resetDetail:"", activationRequired:true, activated:false, howToUse:"Enable on a compatible Echo device.", notes:""},
+      b5:{name:"RxPass", kind:"perk", value:"$5/mo, generic prescriptions", resetPeriod:"ongoing", resetDetail:"", activationRequired:true, activated:false, howToUse:"Opt in from Amazon Pharmacy.", notes:"Separate cost, not free — but cheap if you take eligible generics."},
+      b6:{name:"Whole Foods discounts", kind:"perk", value:"Included", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"", notes:""}
+    }
+  },
+  utility_wageworks: {
+    name: "Transit commuter benefit (WageWorks)",
+    category: "utility",
+    owner: "Rodrigo",
+    provider: "WageWorks",
+    annualFee: null,
+    benefits: {
+      b1:{name:"Pretax transit set-aside", kind:"credit", value:"$150/mo (you contribute)", resetPeriod:"monthly", resetDetail:"Use it or lose it each month", activationRequired:false, howToUse:"Loaded automatically to your WageWorks transit card each month.", notes:"2026 IRS limit is $340/mo — you could shelter more pretax if your commute costs support it."}
+    }
+  },
+  utility_verizon_wireless: {
+    name: "Verizon Wireless",
+    category: "utility",
+    owner: "Shared",
+    provider: "Verizon",
+    annualFee: null,
+    benefits: {}
+  },
+  utility_verizon_fios: {
+    name: "Verizon Fios",
+    category: "utility",
+    owner: "Shared",
+    provider: "Verizon",
+    annualFee: null,
+    benefits: {}
+  },
+  membership_costco: {
+    name: "Costco Membership",
+    category: "membership",
+    owner: "Shared",
+    provider: "Costco",
+    annualFee: "$65/yr (Gold Star)",
+    benefits: {
+      b1:{name:"Warehouse & Costco.com access", kind:"perk", value:"Included", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"", notes:"Gold Star doesn't earn the 2% Executive reward — that needs the $130/yr upgrade."},
+      b2:{name:"Discounted gas", kind:"perk", value:"~$0.15–0.35/gal cheaper", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"Fill up at any Costco gas station.", notes:""},
+      b3:{name:"Household card", kind:"perk", value:"1 extra card included", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"Add a second household member at your address at no extra cost.", notes:"Karina can be added on this if not already."},
+      b4:{name:"Travel & services discounts", kind:"perk", value:"Costco Travel, auto, insurance", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"Book through Costco Travel or the Services tab on costco.com.", notes:""}
+    }
+  },
+  card_csp_karina: {
+    name: "Chase Sapphire Preferred",
+    category: "card",
+    owner: "Karina",
+    provider: "Chase",
+    annualFee: "$95/yr",
+    benefits: {
+      b1:{name:"Hotel credit (Chase Travel)", kind:"credit", value:"$100/yr", resetPeriod:"annual_anniversary", resetDetail:"Resets on account anniversary", activationRequired:false, howToUse:"Books automatically against hotel stays booked via Chase Travel.", notes:"Doubled from $50 in the June 2026 refresh."},
+      b2:{name:"Global Entry / TSA PreCheck credit", kind:"credit", value:"Up to $120", resetPeriod:"one_time_year", resetDetail:"Every 4 years", activationRequired:false, howToUse:"Pay the application fee with the card.", notes:""},
+      b3:{name:"Apple TV+ subscription", kind:"perk", value:"Free 1 year (~$156 value)", resetPeriod:"ongoing", resetDetail:"Activate by Dec 31, 2026", activationRequired:true, activated:false, howToUse:"Activate in the Chase app.", notes:""},
+      b4:{name:"DashPass membership", kind:"perk", value:"Free through Dec 2027", resetPeriod:"ongoing", resetDetail:"", activationRequired:true, activated:false, howToUse:"Activate via Chase.com or the Chase app.", notes:""},
+      b5:{name:"Trip & rental car protections", kind:"perk", value:"Included", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"", notes:"Primary rental coverage, trip delay/cancellation insurance, baggage delay, emergency evacuation."}
+    }
+  },
+  card_united_gateway_karina: {
+    name: "United Gateway Card",
+    category: "card",
+    owner: "Karina",
+    provider: "Chase",
+    annualFee: "$0",
+    benefits: {
+      b1:{name:"Bonus miles earning", kind:"perk", value:"2x United, gas, transit · 1x everything else", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"", notes:"No free checked bag on this tier — that's Explorer only."},
+      b2:{name:"No foreign transaction fees", kind:"perk", value:"Included", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"", notes:""}
+    }
+  },
+  card_amex_blue_karina: {
+    name: "Amex Blue Cash Everyday",
+    category: "card",
+    owner: "Karina",
+    provider: "American Express",
+    annualFee: "$0",
+    benefits: {
+      b1:{name:"Groceries, gas, online retail", kind:"perk", value:"3% back (up to $6,000/yr each, then 1%)", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"", notes:"Cap resets per category, per year."},
+      b2:{name:"Disney Bundle credit", kind:"credit", value:"$7/mo (~$84/yr)", resetPeriod:"monthly", resetDetail:"No rollover if missed", activationRequired:true, activated:false, howToUse:"Enroll once, then pay for Disney+/Hulu/ESPN+ with the card.", notes:""},
+      b3:{name:"Home Chef credit", kind:"credit", value:"$15/mo (up to $180/yr)", resetPeriod:"monthly", resetDetail:"No rollover if missed", activationRequired:true, activated:false, howToUse:"Enroll once, then order from Home Chef with the card.", notes:""}
+    }
+  }
+};
+
+itemsRef.once('value').then(snap => {
+  if (!snap.exists()) {
+    itemsRef.set(SEED);
+  }
+});
+
+/* ====================== HELPERS ====================== */
+function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
+
+function parseAnnualValue(val){
+  if(!val) return 0;
+  const m = val.match(/\$([\d,]+)/);
+  if(!m) return 0;
+  return parseInt(m[1].replace(/,/g,''), 10);
+}
+
+function currentPeriodKey(benefit, item){
+  const now = new Date();
+  const y = now.getFullYear();
+  switch(benefit.resetPeriod){
+    case 'monthly': return `${y}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    case 'biannual': return now.getMonth() < 6 ? `${y}-H1` : `${y}-H2`;
+    case 'annual_calendar': return `${y}`;
+    case 'one_time_year': return `${y}`;
+    case 'annual_anniversary': {
+      if(!item.anniversaryDate) return `${y}`;
+      const [am, ad] = item.anniversaryDate.split('-').map(Number);
+      const passed = (now.getMonth()+1 > am) || (now.getMonth()+1 === am && now.getDate() >= ad);
+      return passed ? `${y}-anniv` : `${y-1}-anniv`;
+    }
+    default: return 'ongoing';
+  }
+}
+
+function periodEndLabel(benefit){
+  switch(benefit.resetPeriod){
+    case 'monthly': return 'Resets next month';
+    case 'biannual': {
+      const now = new Date();
+      return now.getMonth() < 6 ? 'Resets Jul 1' : 'Resets Jan 1';
+    }
+    case 'annual_calendar': return 'Resets Jan 1';
+    case 'annual_anniversary': return 'Resets on account anniversary';
+    case 'one_time_year': return benefit.resetDetail || 'One-time';
+    default: return '';
+  }
+}
+
+/* ====================== RENDER ====================== */
+let itemsCache = {};
+
+itemsRef.on('value', snap => {
+  itemsCache = snap.val() || {};
+  render();
+});
+
+function render(){
+  const lists = { card: [], membership: [], utility: [] };
+  let totalValue = 0, unusedCount = 0, totalCount = 0;
+
+  Object.entries(itemsCache).forEach(([id, item]) => {
+    lists[item.category] = lists[item.category] || [];
+    lists[item.category].push([id, item]);
+    totalCount++;
+  });
+
+  Object.values(itemsCache).forEach(item => {
+    Object.values(item.benefits || {}).forEach(b => {
+      if (b.kind !== 'credit') return;
+      const base = parseAnnualValue(b.value);
+      if (b.resetPeriod === 'monthly') totalValue += base * 12;
+      else totalValue += base;
+    });
+    Object.values(item.benefits||{}).forEach(b=>{
+      if(b.kind==='credit'){
+        const key = currentPeriodKey(b, item);
+        const used = (b.usedPeriods && b.usedPeriods[key]) || false;
+        if(!used) unusedCount++;
+      }
+    });
+  });
+
+  document.getElementById('statValue').textContent = fmtMoney(totalValue);
+  document.getElementById('statUnused').textContent = unusedCount;
+  document.getElementById('statCount').textContent = totalCount;
+
+  ['card','membership','utility'].forEach(cat => {
+    const container = document.getElementById('list-'+cat);
+    const arr = lists[cat] || [];
+    document.getElementById('count-'+cat).textContent = arr.length ? `(${arr.length})` : '';
+    if (arr.length === 0){
+      container.innerHTML = `<div class="empty">Nothing here yet.</div>`;
+      return;
+    }
+    container.innerHTML = arr.map(([id, item]) => renderItem(id, item)).join('');
+  });
+
+  attachItemHandlers();
+}
+
+function renderItem(id, item){
+  const benefits = Object.entries(item.benefits || {});
+  const annualVal = benefits.reduce((sum,[,b])=>{
+    if(b.kind!=='credit') return sum;
+    const base = parseAnnualValue(b.value);
+    return sum + (b.resetPeriod==='monthly' ? base*12 : base);
+  },0);
+
+  const benefitRows = benefits.length ? benefits.map(([bid,b]) => renderBenefit(id,bid,b,item)).join('') :
+    `<div class="empty">No benefits added yet. Use "Research with AI" above with this item's name, or add one manually.</div>`;
+
+  return `
+  <div class="item-card" data-id="${id}">
+    <div class="item-head" data-toggle="${id}">
+      <div class="item-head-left">
+        <div class="item-name">${item.name}</div>
+        <div class="item-sub">${item.owner ? item.owner + ' · ' : ''}${item.provider || ''}${item.annualFee ? ' · ' + item.annualFee : ''}</div>
+      </div>
+      <div class="item-head-right">
+        ${annualVal ? `<span class="value-tag">${fmtMoney(annualVal)}/yr</span>` : ''}
+        <span class="chevron">›</span>
+      </div>
+    </div>
+    <div class="item-body">
+      ${benefitRows}
+      <div class="item-body-actions">
+        <button data-research-more="${id}">Re-research this</button>
+        <button data-delete="${id}">Delete</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderBenefit(itemId,bid,b,item){
+  const key = currentPeriodKey(b,item);
+  const used = (b.usedPeriods && b.usedPeriods[key]) || false;
+  const isCredit = b.kind === 'credit';
+  return `
+  <div class="benefit-row">
+    ${isCredit ? `<input type="checkbox" data-used="${itemId}|${bid}|${key}" ${used?'checked':''}>` : `<span style="width:16px"></span>`}
+    <div class="benefit-main">
+      <div class="benefit-name-line">
+        <span class="benefit-name">${b.name}</span>
+        <span class="benefit-value">${b.value || ''}</span>
+      </div>
+      <div class="benefit-meta">
+        ${b.resetDetail || periodEndLabel(b) || ''}
+        ${b.activationRequired ? `<span class="badge ${b.activated?'used':'needs'}">${b.activated?'activated':'needs activation'}</span>` : ''}
+      </div>
+      ${b.howToUse ? `<div class="benefit-how">${b.howToUse}</div>` : ''}
+      ${b.notes ? `<div class="benefit-how">${b.notes}</div>` : ''}
+      ${b.activationRequired ? `<button class="activate-toggle ${b.activated?'on':''}" data-activate="${itemId}|${bid}">${b.activated?'✓ activated':'mark activated'}</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function attachItemHandlers(){
+  document.querySelectorAll('[data-toggle]').forEach(el=>{
+    el.onclick = () => el.closest('.item-card').classList.toggle('open');
+  });
+  document.querySelectorAll('[data-used]').forEach(el=>{
+    el.onchange = (e) => {
+      const [itemId,bid,key] = el.dataset.used.split('|');
+      itemsRef.child(`${itemId}/benefits/${bid}/usedPeriods/${key}`).set(e.target.checked);
+    };
+  });
+  document.querySelectorAll('[data-activate]').forEach(el=>{
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const [itemId,bid] = el.dataset.activate.split('|');
+      const current = itemsCache[itemId].benefits[bid].activated;
+      itemsRef.child(`${itemId}/benefits/${bid}/activated`).set(!current);
+    };
+  });
+  document.querySelectorAll('[data-delete]').forEach(el=>{
+    el.onclick = (e) => {
+      e.stopPropagation();
+      if(confirm('Remove this?')) itemsRef.child(el.dataset.delete).remove();
+    };
+  });
+  document.querySelectorAll('[data-research-more]').forEach(el=>{
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const id = el.dataset.researchMore;
+      const item = itemsCache[id];
+      document.getElementById('itemNameInput').value = item.name;
+      document.getElementById('itemTypeSelect').value = item.category;
+      document.getElementById('itemOwnerSelect').value = item.owner || 'Shared';
+      window.scrollTo({top:0, behavior:'smooth'});
+      runResearch(id);
+    };
+  });
+}
+
+/* ====================== ADD / RESEARCH FLOW ====================== */
+const nameInput = document.getElementById('itemNameInput');
+const typeSelect = document.getElementById('itemTypeSelect');
+const ownerSelect = document.getElementById('itemOwnerSelect');
+const reviewScreen = document.getElementById('reviewScreen');
+const claudeLink = document.getElementById('claudeLink');
+
+function updateClaudeLink(){
+  const name = nameInput.value.trim() || "this item";
+  const prompt = `Itemize the current, real benefits of "${name}": list each benefit, its dollar value or perk, how often it resets, whether it needs activation, and how to use it. Be specific and current.`;
+  claudeLink.href = 'https://claude.ai/new?q=' + encodeURIComponent(prompt);
+}
+nameInput.addEventListener('input', updateClaudeLink);
+updateClaudeLink();
+
+document.getElementById('researchBtn').onclick = () => runResearch(null);
+document.getElementById('manualBtn').onclick = () => openManualReview(null);
+
+async function runResearch(existingId){
+  const name = nameInput.value.trim();
+  if(!name){ nameInput.focus(); return; }
+  const type = typeSelect.value;
+  const owner = ownerSelect.value;
+  reviewScreen.hidden = false;
+  reviewScreen.innerHTML = `<div class="loading">Researching ${name}…</div>`;
+
+  if (!RESEARCH_ENDPOINT || RESEARCH_ENDPOINT.startsWith('REPLACE_ME')) {
+    reviewScreen.innerHTML = `<div class="loading">Research endpoint isn't configured yet — use "Ask Claude directly" for now, or add benefits manually.</div>`;
+    return;
+  }
+
+  try{
+    const res = await fetch(RESEARCH_ENDPOINT, {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ itemName:name, itemType:type })
+    });
+    if(!res.ok) throw new Error('Research request failed');
+    const data = await res.json();
+    showReview(data, name, type, owner, existingId);
+  }catch(err){
+    reviewScreen.innerHTML = `<div class="loading">Couldn't complete research (${err.message}). Try "Ask Claude directly" instead.</div>`;
+  }
+}
+
+function showReview(data, name, type, owner, existingId){
+  const benefits = data.benefits || [];
+  reviewScreen.innerHTML = `
+    <div class="review-head"><h3>Review before saving</h3></div>
+    ${data.sourceNote ? `<div class="review-source">${data.sourceNote}</div>` : ''}
+    <div id="reviewList"></div>
+    <div class="add-footer">
+      <button class="btn" id="saveReviewBtn">Save</button>
+      <button class="btn secondary" id="discardReviewBtn">Discard</button>
+    </div>
+  `;
+  const list = document.getElementById('reviewList');
+  list.innerHTML = benefits.map((b,i) => reviewRow(b,i)).join('');
+
+  document.getElementById('discardReviewBtn').onclick = () => { reviewScreen.hidden = true; reviewScreen.innerHTML=''; };
+  document.getElementById('saveReviewBtn').onclick = () => saveReview(name, type, owner, data.provider, data.annualFee, existingId);
+}
+
+function reviewRow(b, i){
+  return `
+  <div class="review-item" data-idx="${i}">
+    <div class="review-item-top">
+      <input type="checkbox" checked data-field="include">
+      <div class="review-fields">
+        <div class="full"><span class="field-label">Benefit name</span><input data-field="name" value="${(b.name||'').replace(/"/g,'&quot;')}"></div>
+        <div><span class="field-label">Value</span><input data-field="value" value="${(b.value||'').replace(/"/g,'&quot;')}"></div>
+        <div><span class="field-label">Kind</span>
+          <select data-field="kind">
+            <option value="credit" ${b.kind==='credit'?'selected':''}>Credit (trackable)</option>
+            <option value="perk" ${b.kind==='perk'?'selected':''}>Ongoing perk</option>
+          </select>
+        </div>
+        <div><span class="field-label">Resets</span>
+          <select data-field="resetPeriod">
+            <option value="monthly" ${b.resetPeriod==='monthly'?'selected':''}>Monthly</option>
+            <option value="biannual" ${b.resetPeriod==='biannual'?'selected':''}>Twice a year</option>
+            <option value="annual_calendar" ${b.resetPeriod==='annual_calendar'?'selected':''}>Yearly (calendar)</option>
+            <option value="annual_anniversary" ${b.resetPeriod==='annual_anniversary'?'selected':''}>Yearly (anniversary)</option>
+            <option value="one_time_year" ${b.resetPeriod==='one_time_year'?'selected':''}>One-time / rare</option>
+            <option value="ongoing" ${(!b.resetPeriod||b.resetPeriod==='ongoing')?'selected':''}>Ongoing, no reset</option>
+          </select>
+        </div>
+        <div><span class="field-label">Needs activation?</span>
+          <select data-field="activationRequired">
+            <option value="false" ${!b.activationRequired?'selected':''}>No</option>
+            <option value="true" ${b.activationRequired?'selected':''}>Yes</option>
+          </select>
+        </div>
+        <div class="full"><span class="field-label">How to use it</span><input data-field="howToUse" value="${(b.howToUse||'').replace(/"/g,'&quot;')}"></div>
+        <div class="full"><span class="field-label">Notes</span><input data-field="notes" value="${(b.notes||'').replace(/"/g,'&quot;')}"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function saveReview(name, type, owner, provider, annualFee, existingId){
+  const rows = document.querySelectorAll('.review-item');
+  const benefits = {};
+  let n = 1;
+  rows.forEach(row => {
+    const include = row.querySelector('[data-field=include]').checked;
+    if(!include) return;
+    const get = f => row.querySelector(`[data-field=${f}]`).value;
+    benefits['b'+(n++)] = {
+      name: get('name'),
+      value: get('value'),
+      kind: get('kind'),
+      resetPeriod: get('resetPeriod'),
+      resetDetail: '',
+      activationRequired: get('activationRequired') === 'true',
+      activated: false,
+      howToUse: get('howToUse'),
+      notes: get('notes')
+    };
+  });
+
+  const id = existingId || ('item_' + Date.now());
+  const payload = {
+    name, category: type, owner: owner || 'Shared', provider: provider || '', annualFee: annualFee || null, benefits
+  };
+  itemsRef.child(id).set(payload).then(()=>{
+    reviewScreen.hidden = true;
+    reviewScreen.innerHTML = '';
+    nameInput.value = '';
+  });
+}
+
+function openManualReview(existingId){
+  const name = nameInput.value.trim() || 'New item';
+  showReview({benefits:[{name:'', value:'', kind:'credit', resetPeriod:'annual_calendar', activationRequired:false, howToUse:'', notes:''}]}, name, typeSelect.value, ownerSelect.value, existingId);
+}
+</script>
+</body>
+</html>
