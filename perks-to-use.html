@@ -46,6 +46,15 @@
 
   /* ---- Hero ---- */
   .hero{padding:8px 0 32px;border-bottom:1px solid var(--line);margin-bottom:32px;}
+
+  .fab-add{
+    position:fixed;top:18px;right:18px;width:44px;height:44px;border-radius:50%;
+    background:var(--ink);color:var(--paper);border:none;font-family:'Space Mono',monospace;
+    font-size:26px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(27,36,48,.25);
+    z-index:50;display:flex;align-items:center;justify-content:center;transition:transform .15s ease, background .15s ease;
+  }
+  .fab-add:hover{background:var(--ink-soft);}
+  .fab-add.open{background:var(--rust);transform:rotate(45deg);}
   .hero h1{font-size:34px;font-weight:600;letter-spacing:-0.01em;}
   .hero .lede{max-width:52ch;color:var(--ink-soft);margin-top:10px;font-size:14.5px;}
   .hero-stats{display:flex;gap:28px;margin-top:24px;flex-wrap:wrap;}
@@ -150,15 +159,15 @@
   }
   .item-controls button:hover{color:var(--ink);}
   .switch-btn{
-    width:30px;height:16px;border-radius:8px;border:none;cursor:pointer;position:relative;
-    background:var(--rust);flex-shrink:0;margin-top:4px;padding:0;transition:background .15s ease;
+    width:38px;height:22px;border-radius:11px;border:none;cursor:pointer;position:relative;
+    background:var(--rust);flex-shrink:0;margin-top:2px;padding:0;transition:background .15s ease;
   }
   .switch-btn.on{background:var(--sage);}
   .switch-btn .knob{
-    position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;
-    background:var(--paper);transition:left .15s ease;
+    position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;
+    background:var(--paper);transition:left .15s ease;box-shadow:0 1px 3px rgba(0,0,0,.35);
   }
-  .switch-btn.on .knob{left:16px;}
+  .switch-btn.on .knob{left:18px;}
 
   .item-body-actions{display:flex;gap:14px;padding:10px 0 4px;font-size:12px;}
   .item-body-actions button{background:none;border:none;color:var(--ink-soft);cursor:pointer;padding:0;text-decoration:underline;font-family:inherit;font-size:12px;}
@@ -177,7 +186,7 @@
 
   <header class="hero">
     <h1>Perks to Use</h1>
-    <button class="btn" id="addToggleBtn">+ Add something you own</button>
+    <button class="fab-add" id="addToggleBtn" aria-label="Add something you own" title="Add something you own">+</button>
     <div class="hero-stats">
       <div class="stat good"><div class="num" id="statValue">—</div><div class="label">tracked annual value</div></div>
       <div class="stat warn"><div class="num" id="statUnused">—</div><div class="label">unused this period</div></div>
@@ -199,8 +208,7 @@
         <button type="button" data-owner="Rodrigo">Rodrigo</button>
         <button type="button" data-owner="Karina">Karina</button>
       </div>
-      <button class="btn" id="researchBtn">Research with AI</button>
-      <button class="btn secondary" id="manualBtn">Add manually</button>
+      <button class="btn" id="manualBtn">Add</button>
     </div>
     <div class="add-footer">
       <a class="claude-link" id="claudeLink" href="#" target="_blank" rel="noopener">Or ask Claude directly →</a>
@@ -227,7 +235,6 @@ const firebaseConfig = {
   messagingSenderId: "529416301427",
   appId: "1:529416301427:web:02726ffd9365d51c6a7306"
 };
-const RESEARCH_ENDPOINT = "REPLACE_ME_CLOUD_RUN_URL";
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -361,12 +368,30 @@ const SEED = {
       b2:{name:"Disney Bundle credit", kind:"credit", value:"$7/mo (~$84/yr)", resetPeriod:"monthly", resetDetail:"No rollover if missed", activationRequired:true, activated:false, howToUse:"Enroll once, then pay for Disney+/Hulu/ESPN+ with the card.", notes:""},
       b3:{name:"Home Chef credit", kind:"credit", value:"$15/mo (up to $180/yr)", resetPeriod:"monthly", resetDetail:"No rollover if missed", activationRequired:true, activated:false, howToUse:"Enroll once, then order from Home Chef with the card.", notes:""}
     }
+  },
+  membership_omnicom_benefits: {
+    name: "Omnicom / BBDO Benefits",
+    category: "membership",
+    owner: "Rodrigo",
+    provider: "Omnicom Benefits",
+    annualFee: null,
+    benefits: {
+      b1:{name:"Calm app subscription", kind:"perk", value:"Free premium (normally ~$70/yr)", resetPeriod:"ongoing", resetDetail:"", activationRequired:true, activated:false, howToUse:"Sign up via omnicombenefits.com/my-life > Calm App using your work email.", notes:""},
+      b2:{name:"Employee Support Program (EAP)", kind:"perk", value:"Free, 24/7", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"Call or visit the EAP portal for confidential counseling, legal referrals, and work-life support.", notes:"Usually includes a set number of free counseling sessions per issue per year — check the plan doc for the exact count."},
+      b3:{name:"Secure Travel & Identity Theft protection", kind:"perk", value:"Free", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"Available automatically — check omnicombenefits.com/my-life for the service provider and enrollment portal.", notes:""},
+      b4:{name:"Health Care FSA (not currently enrolled)", kind:"perk", value:"Pretax election, up to IRS limit", resetPeriod:"ongoing", resetDetail:"", activationRequired:true, activated:false, howToUse:"Elect during open enrollment on bswift — since you're on regular Aetna (not an HSA-eligible plan), you qualify for this instead of an HSA.", notes:"Use-it-or-lose-it each plan year. Worth considering at next enrollment if you have predictable medical/dental/vision costs."}
+    }
   }
 };
 
 itemsRef.once('value').then(snap => {
-  if (!snap.exists()) {
-    itemsRef.set(SEED);
+  const existing = snap.val() || {};
+  const updates = {};
+  Object.entries(SEED).forEach(([key, val]) => {
+    if (!existing[key]) updates[key] = val;
+  });
+  if (Object.keys(updates).length) {
+    itemsRef.update(updates);
   }
 });
 
@@ -441,6 +466,7 @@ function render(){
   document.getElementById('statUnused').textContent = unusedCount;
   document.getElementById('statCount').textContent = totalCount;
 
+  const scrollPos = window.scrollY;
   const container = document.getElementById('ownerSections');
   container.innerHTML = OWNER_ORDER.map(owner => {
     const cats = { card: [], membership: [], utility: [] };
@@ -468,10 +494,12 @@ function render(){
   }).join('');
 
   attachItemHandlers();
+  window.scrollTo(0, scrollPos);
 }
 
 const editItems = new Set();
 const showAllItems = new Set();
+const openItems = new Set();
 
 function renderItem(id, item){
   const allBenefits = Object.entries(item.benefits || {});
@@ -487,12 +515,12 @@ function renderItem(id, item){
 
   const benefitRows = visibleBenefits.length ? visibleBenefits.map(([bid,b]) => renderBenefit(id,bid,b,item,editMode)).join('') :
     (allBenefits.length ? `<div class="empty">Everything here is hidden. Tap "Edit" to bring benefits back.</div>` :
-    `<div class="empty">No benefits added yet. Use "Research with AI" above with this item's name, or add one manually.</div>`);
+    `<div class="empty">No benefits added yet. Tap "Add" above, or use the "Ask Claude directly" link to research it first.</div>`);
 
   const hiddenCount = allBenefits.length - allBenefits.filter(([,b]) => b.featured !== false).length;
 
   return `
-  <div class="item-card" data-id="${id}">
+  <div class="item-card ${openItems.has(id) ? 'open' : ''}" data-id="${id}">
     <div class="item-head" data-toggle="${id}">
       <div class="item-head-left">
         <div class="item-name">${item.name}</div>
@@ -510,7 +538,6 @@ function renderItem(id, item){
     <div class="item-body">
       ${benefitRows}
       <div class="item-body-actions">
-        <button data-research-more="${id}">Re-research this</button>
         <button data-delete="${id}">Delete</button>
       </div>
     </div>
@@ -544,7 +571,11 @@ function renderBenefit(itemId,bid,b,item,editMode){
 
 function attachItemHandlers(){
   document.querySelectorAll('[data-toggle]').forEach(el=>{
-    el.onclick = () => el.closest('.item-card').classList.toggle('open');
+    el.onclick = () => {
+      const id = el.dataset.toggle;
+      if (openItems.has(id)) openItems.delete(id); else openItems.add(id);
+      render();
+    };
   });
   document.querySelectorAll('[data-used]').forEach(el=>{
     el.onchange = (e) => {
@@ -573,8 +604,8 @@ function attachItemHandlers(){
       e.stopPropagation();
       const id = el.dataset.editToggle;
       if (editItems.has(id)) editItems.delete(id); else editItems.add(id);
+      openItems.add(id);
       render();
-      document.querySelector(`.item-card[data-id="${id}"]`)?.classList.add('open');
     };
   });
   document.querySelectorAll('[data-showall-toggle]').forEach(el=>{
@@ -582,8 +613,8 @@ function attachItemHandlers(){
       e.stopPropagation();
       const id = el.dataset.showallToggle;
       if (showAllItems.has(id)) showAllItems.delete(id); else showAllItems.add(id);
+      openItems.add(id);
       render();
-      document.querySelector(`.item-card[data-id="${id}"]`)?.classList.add('open');
     };
   });
   document.querySelectorAll('[data-delete]').forEach(el=>{
@@ -592,21 +623,9 @@ function attachItemHandlers(){
       if(confirm('Remove this?')) itemsRef.child(el.dataset.delete).remove();
     };
   });
-  document.querySelectorAll('[data-research-more]').forEach(el=>{
-    el.onclick = (e) => {
-      e.stopPropagation();
-      const id = el.dataset.researchMore;
-      const item = itemsCache[id];
-      document.getElementById('itemNameInput').value = item.name;
-      document.getElementById('itemTypeSelect').value = item.category;
-      ownerSelect.value = item.owner || 'Shared';
-      window.scrollTo({top:0, behavior:'smooth'});
-      runResearch(id);
-    };
-  });
 }
 
-/* ====================== ADD / RESEARCH FLOW ====================== */
+/* ====================== ADD / MANUAL ENTRY FLOW ====================== */
 const nameInput = document.getElementById('itemNameInput');
 const typeSelect = document.getElementById('itemTypeSelect');
 const reviewScreen = document.getElementById('reviewScreen');
@@ -616,7 +635,7 @@ const addPanel = document.getElementById('addPanel');
 const addToggleBtn = document.getElementById('addToggleBtn');
 addToggleBtn.onclick = () => {
   addPanel.hidden = !addPanel.hidden;
-  addToggleBtn.textContent = addPanel.hidden ? '+ Add something you own' : '− Close';
+  addToggleBtn.classList.toggle('open', !addPanel.hidden);
   if (!addPanel.hidden) nameInput.focus();
 };
 
@@ -641,67 +660,7 @@ function updateClaudeLink(){
 nameInput.addEventListener('input', updateClaudeLink);
 updateClaudeLink();
 
-document.getElementById('researchBtn').onclick = () => runResearch(null);
 document.getElementById('manualBtn').onclick = () => openManualReview(null);
-
-async function runResearch(existingId){
-  const name = nameInput.value.trim();
-  if(!name){ nameInput.focus(); return; }
-  const type = typeSelect.value;
-  const owner = ownerSelect.value;
-  reviewScreen.hidden = false;
-  reviewScreen.innerHTML = `<div class="loading">Researching ${name}…</div>`;
-
-  if (!RESEARCH_ENDPOINT || RESEARCH_ENDPOINT.startsWith('REPLACE_ME')) {
-    reviewScreen.innerHTML = `<div class="loading">Research endpoint isn't configured yet — use "Ask Claude directly" for now, or add benefits manually.</div>`;
-    return;
-  }
-
-  try{
-    const res = await fetch(RESEARCH_ENDPOINT, {
-      method:'POST',
-      headers:{'content-type':'application/json'},
-      body: JSON.stringify({ itemName:name, itemType:type })
-    });
-    if(!res.ok) throw new Error('Research request failed');
-    const data = await res.json();
-    await saveResearchedItem(data, name, type, owner, existingId);
-  }catch(err){
-    reviewScreen.innerHTML = `<div class="loading">Couldn't complete research (${err.message}). Try "Ask Claude directly" instead.</div>`;
-  }
-}
-
-async function saveResearchedItem(data, name, type, owner, existingId){
-  const benefitsIn = data.benefits || [];
-  const benefits = {};
-  benefitsIn.forEach((b,i) => {
-    benefits['b'+(i+1)] = {
-      name: b.name || '',
-      value: b.value || '',
-      kind: b.kind === 'perk' ? 'perk' : 'credit',
-      resetPeriod: b.resetPeriod || 'ongoing',
-      resetDetail: '',
-      activationRequired: !!b.activationRequired,
-      activated: false,
-      howToUse: b.howToUse || '',
-      notes: b.notes || '',
-      featured: true
-    };
-  });
-  const id = existingId || ('item_' + Date.now());
-  const payload = {
-    name, category: type, owner: owner || 'Shared', provider: data.provider || '', annualFee: data.annualFee || null, benefits
-  };
-  await itemsRef.child(id).set(payload);
-  reviewScreen.innerHTML = `<div class="loading">Added ${data.displayName || name} with ${benefitsIn.length} benefit${benefitsIn.length===1?'':'s'}. Use "Edit" on the card to hide any you don't want featured.</div>`;
-  setTimeout(() => {
-    reviewScreen.hidden = true;
-    reviewScreen.innerHTML = '';
-    addPanel.hidden = true;
-    addToggleBtn.textContent = '+ Add something you own';
-    nameInput.value = '';
-  }, 1600);
-}
 
 function showReview(data, name, type, owner, existingId){
   const benefits = data.benefits || [];
@@ -787,6 +746,8 @@ function saveReview(name, type, owner, provider, annualFee, existingId){
   itemsRef.child(id).set(payload).then(()=>{
     reviewScreen.hidden = true;
     reviewScreen.innerHTML = '';
+    addPanel.hidden = true;
+    addToggleBtn.classList.remove('open');
     nameInput.value = '';
   });
 }
