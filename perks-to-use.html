@@ -42,7 +42,7 @@
   }
   a{color:var(--brass-deep);}
   button{font-family:inherit;}
-  #app{max-width:760px;margin:0 auto;padding:28px 20px 120px;}
+  #app{max-width:1120px;margin:0 auto;padding:28px 20px 120px;}
 
   /* ---- Hero ---- */
   .hero{padding:8px 0 32px;border-bottom:1px solid var(--line);margin-bottom:32px;}
@@ -92,6 +92,10 @@
   .owner-toggle button.active{background:var(--ink);color:var(--paper);}
 
   .owner-section{margin-bottom:44px;}
+  .owner-sections{display:grid;grid-template-columns:1fr 1fr;gap:0 40px;align-items:start;}
+  @media (max-width:760px){
+    .owner-sections{grid-template-columns:1fr;}
+  }
   .owner-section-head{display:flex;align-items:baseline;gap:10px;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid var(--ink);}
   .owner-section-head h2{font-family:'Fraunces',serif;font-size:24px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink);}
   .owner-section-head .owner-value{font-size:13px;color:var(--brass-deep);font-weight:600;}
@@ -177,9 +181,28 @@
   .fee-edit{width:90px;font-size:12px;}
   .value-edit{width:150px;font-weight:600;color:var(--brass-deep);text-align:right;}
 
-  .item-body-actions{display:flex;gap:14px;padding:10px 0 4px;font-size:12px;}
-  .item-body-actions button{background:none;border:none;color:var(--ink-soft);cursor:pointer;padding:0;text-decoration:underline;font-family:inherit;font-size:12px;}
-  .item-body-actions button:hover{color:var(--ink);}
+  .info-icon{
+    display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;
+    border-radius:50%;border:1px solid var(--ink-soft);color:var(--ink-soft);font-size:10px;
+    margin-left:5px;cursor:help;flex-shrink:0;vertical-align:middle;
+  }
+  .info-icon:hover{border-color:var(--brass-deep);color:var(--brass-deep);}
+
+  .group-block{border:2px solid var(--brass);border-radius:var(--radius);padding:10px;margin-bottom:14px;background:var(--paper-dim);}
+  .group-block .item-card{margin-bottom:8px;}
+  .group-block .item-card:last-child{margin-bottom:0;}
+  .ungroup-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:12px;padding:6px 12px;border-radius:6px;}
+  .ungroup-btn:hover{border-color:var(--ink);color:var(--ink);}
+
+  [data-drop-id].drag-over{outline:2px dashed var(--brass-deep);outline-offset:-2px;background:var(--paper-dim);}
+  [data-drag-id]{cursor:grab;}
+
+  .item-body-actions{display:flex;justify-content:flex-end;gap:10px;padding:12px 0 4px;border-top:1px solid var(--paper-dim);margin-top:4px;}
+  .delete-btn{
+    background:none;border:1px solid var(--rust);color:var(--rust);cursor:pointer;
+    font-family:inherit;font-size:12px;padding:6px 12px;border-radius:6px;
+  }
+  .delete-btn:hover{background:var(--rust);color:var(--paper);}
 
   .empty{color:var(--ink-soft);font-size:13.5px;border:1px dashed var(--line);border-radius:8px;padding:16px;text-align:center;}
 
@@ -384,10 +407,10 @@ const SEED = {
     provider: "Omnicom Benefits",
     annualFee: null,
     benefits: {
-      b1:{name:"Calm app subscription", kind:"perk", value:"Free premium (normally ~$70/yr)", resetPeriod:"ongoing", resetDetail:"", activationRequired:true, activated:false, howToUse:"Sign up via omnicombenefits.com/my-life > Calm App using your work email.", notes:""},
-      b2:{name:"Employee Support Program (EAP)", kind:"perk", value:"Free, 24/7", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"Call or visit the EAP portal for confidential counseling, legal referrals, and work-life support.", notes:"Usually includes a set number of free counseling sessions per issue per year — check the plan doc for the exact count."},
-      b3:{name:"Secure Travel & Identity Theft protection", kind:"perk", value:"Free", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"Available automatically — check omnicombenefits.com/my-life for the service provider and enrollment portal.", notes:""},
-      b4:{name:"Health Care FSA (not currently enrolled)", kind:"perk", value:"Pretax election, up to IRS limit", resetPeriod:"ongoing", resetDetail:"", activationRequired:true, activated:false, howToUse:"Elect during open enrollment on bswift — since you're on regular Aetna (not an HSA-eligible plan), you qualify for this instead of an HSA.", notes:"Use-it-or-lose-it each plan year. Worth considering at next enrollment if you have predictable medical/dental/vision costs."}
+      b1:{name:"Calm app subscription", kind:"perk", value:"Free premium (normally ~$70/yr)", resetPeriod:"ongoing", resetDetail:"", activationRequired:true, activated:false, howToUse:"Sign up via omnicombenefits.com/my-life > Calm App using your work email.", notes:"", explainer:"Calm is a meditation/sleep app. This gives you the full paid version free instead of the ~$70/yr subscription."},
+      b2:{name:"Employee Support Program (EAP)", kind:"perk", value:"Free, 24/7", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"Call or visit the EAP portal for confidential counseling, legal referrals, and work-life support.", notes:"Usually includes a set number of free counseling sessions per issue per year — check the plan doc for the exact count.", explainer:"EAP = Employee Assistance Program. A free, confidential service (not insurance) for short-term counseling, stress, family issues, or finding a specialist — separate from your health plan."},
+      b3:{name:"Secure Travel & Identity Theft protection", kind:"perk", value:"Free", resetPeriod:"ongoing", resetDetail:"", activationRequired:false, howToUse:"Available automatically — check omnicombenefits.com/my-life for the service provider and enrollment portal.", notes:"", explainer:"A service that helps if your identity is stolen (credit monitoring, recovery help) and gives emergency assistance if something goes wrong while traveling for work or personal trips."},
+      b4:{name:"Health Care FSA (not currently enrolled)", kind:"perk", value:"Pretax election, up to IRS limit", resetPeriod:"ongoing", resetDetail:"", activationRequired:true, activated:false, howToUse:"Elect during open enrollment on bswift — since you're on regular Aetna (not an HSA-eligible plan), you qualify for this instead of an HSA.", notes:"Use-it-or-lose-it each plan year. Worth considering at next enrollment if you have predictable medical/dental/vision costs.", explainer:"FSA = Flexible Spending Account. You set aside part of your paycheck pretax (before taxes are taken out) to spend on medical costs like copays and prescriptions — it just lowers your taxable income. Unlike an HSA, unused money doesn't roll over."}
     }
   }
 };
@@ -401,6 +424,21 @@ itemsRef.once('value').then(snap => {
   // One-time correction: Chase Sapphire Reserve's fee rose from $550 to $795 in June 2025.
   if (existing.card_csr && existing.card_csr.annualFee !== '$795/yr') {
     updates['card_csr/annualFee'] = '$795/yr';
+  }
+  // One-time correction: backfill explainer tooltips on the Omnicom benefits item.
+  if (existing.membership_omnicom_benefits && existing.membership_omnicom_benefits.benefits) {
+    const omniBenefits = existing.membership_omnicom_benefits.benefits;
+    const explainers = {
+      b1: "Calm is a meditation/sleep app. This gives you the full paid version free instead of the ~$70/yr subscription.",
+      b2: "EAP = Employee Assistance Program. A free, confidential service (not insurance) for short-term counseling, stress, family issues, or finding a specialist — separate from your health plan.",
+      b3: "A service that helps if your identity is stolen (credit monitoring, recovery help) and gives emergency assistance if something goes wrong while traveling for work or personal trips.",
+      b4: "FSA = Flexible Spending Account. You set aside part of your paycheck pretax (before taxes are taken out) to spend on medical costs like copays and prescriptions — it just lowers your taxable income. Unlike an HSA, unused money doesn't roll over."
+    };
+    Object.entries(explainers).forEach(([bid, text]) => {
+      if (omniBenefits[bid] && !omniBenefits[bid].explainer) {
+        updates[`membership_omnicom_benefits/benefits/${bid}/explainer`] = text;
+      }
+    });
   }
   if (Object.keys(updates).length) {
     itemsRef.update(updates);
@@ -491,10 +529,11 @@ function render(){
     const catHtml = ['card','membership','utility'].map(cat => {
       const arr = cats[cat] || [];
       if (arr.length === 0) return '';
+      const units = clusterByGroup(arr);
       return `
         <div class="category">
           <h2>${CAT_LABELS[cat]} <span class="count">(${arr.length})</span></h2>
-          <div class="item-list">${arr.map(([id,item]) => renderItem(id,item)).join('')}</div>
+          <div class="item-list">${units.map(u => u.type==='folder' ? renderGroupBlock(u) : renderItem(u.id,u.item)).join('')}</div>
         </div>`;
     }).join('');
     const hasItems = Object.values(cats).some(arr => arr.length);
@@ -512,6 +551,36 @@ function render(){
 const editItems = new Set();
 const showAllItems = new Set();
 const openItems = new Set();
+
+function clusterByGroup(arr){
+  const groups = {};
+  const units = [];
+  arr.forEach(([id,item]) => {
+    if (item.groupId) {
+      groups[item.groupId] = groups[item.groupId] || [];
+      groups[item.groupId].push([id,item]);
+    } else {
+      units.push({type:'item', id, item});
+    }
+  });
+  Object.entries(groups).forEach(([gid, members]) => {
+    if (members.length >= 2) {
+      units.push({type:'folder', groupId:gid, items:members});
+    } else {
+      members.forEach(([id,item]) => units.push({type:'item', id, item}));
+    }
+  });
+  return units;
+}
+
+
+function renderGroupBlock(unit){
+  const gid = unit.groupId;
+  return `
+  <div class="group-block" data-drop-id="folder:${gid}">
+    ${unit.items.map(([id,item]) => renderItem(id,item)).join('')}
+  </div>`;
+}
 
 function renderItem(id, item){
   const allBenefits = Object.entries(item.benefits || {});
@@ -533,7 +602,7 @@ function renderItem(id, item){
 
   return `
   <div class="item-card ${openItems.has(id) ? 'open' : ''}" data-id="${id}">
-    <div class="item-head" data-toggle="${id}">
+    <div class="item-head" data-toggle="${id}" draggable="true" data-drag-id="item:${id}" data-drop-id="item:${id}">
       <div class="item-head-left">
         <div class="item-name">${item.name}</div>
         <div class="item-sub">${item.owner ? item.owner + ' · ' : ''}${item.provider || ''}${editMode ? ` · <input class="inline-edit fee-edit" data-edit-field="${id}|annualFee" value="${(item.annualFee||'').replace(/"/g,'&quot;')}" placeholder="annual fee">` : (item.annualFee ? ' · ' + item.annualFee : '')}</div>
@@ -550,7 +619,8 @@ function renderItem(id, item){
     <div class="item-body">
       ${benefitRows}
       <div class="item-body-actions">
-        <button data-delete="${id}">Delete</button>
+        ${item.groupId ? `<button class="ungroup-btn" data-ungroup="${id}">Remove from folder</button>` : ''}
+        <button class="delete-btn" data-delete="${id}">Delete this item</button>
       </div>
     </div>
   </div>`;
@@ -567,7 +637,7 @@ function renderBenefit(itemId,bid,b,item,editMode){
     ${isCredit ? `<input type="checkbox" data-used="${itemId}|${bid}|${key}" ${used?'checked':''}>` : `<span style="width:16px"></span>`}
     <div class="benefit-main">
       <div class="benefit-name-line">
-        <span class="benefit-name">${b.name}</span>
+        <span class="benefit-name">${b.name}${b.explainer ? `<span class="info-icon" title="${b.explainer.replace(/"/g,'&quot;')}">?</span>` : ''}</span>
         <span class="benefit-value">${editMode ? `<input class="inline-edit value-edit" data-edit-field="${itemId}|${bid}|value" value="${(b.value||'').replace(/"/g,'&quot;')}">` : (b.value || '')}</span>
       </div>
       <div class="benefit-meta">
@@ -648,6 +718,66 @@ function attachItemHandlers(){
       if(confirm('Remove this?')) itemsRef.child(el.dataset.delete).remove();
     };
   });
+  document.querySelectorAll('[data-ungroup]').forEach(el=>{
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const id = el.dataset.ungroup;
+      const gid = itemsCache[id] && itemsCache[id].groupId;
+      itemsRef.child(id).child('groupId').remove().then(() => {
+        if (!gid) return;
+        const remaining = Object.entries(itemsCache).filter(([iid,it]) => iid!==id && it.groupId===gid);
+        if (remaining.length < 2) {
+          remaining.forEach(([iid]) => itemsRef.child(iid).child('groupId').remove());
+        }
+      });
+    };
+  });
+
+  /* ---- Drag and drop grouping ---- */
+  document.querySelectorAll('[data-drag-id]').forEach(el=>{
+    el.ondragstart = (e) => {
+      e.dataTransfer.setData('text/plain', el.dataset.dragId);
+      e.dataTransfer.effectAllowed = 'move';
+    };
+  });
+  document.querySelectorAll('[data-drop-id]').forEach(el=>{
+    el.ondragover = (e) => { e.preventDefault(); el.classList.add('drag-over'); };
+    el.ondragleave = () => el.classList.remove('drag-over');
+    el.ondrop = (e) => {
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      const draggedRaw = e.dataTransfer.getData('text/plain');
+      const targetRaw = el.dataset.dropId;
+      if (!draggedRaw || draggedRaw === targetRaw) return;
+      handleGroupDrop(draggedRaw, targetRaw);
+    };
+  });
+}
+
+function handleGroupDrop(draggedRaw, targetRaw){
+  const [draggedType, draggedId] = draggedRaw.split(':');
+  const [targetType, targetId] = targetRaw.split(':');
+  if (draggedType !== 'item') return;
+  const draggedItem = itemsCache[draggedId];
+  if (!draggedItem) return;
+
+  if (targetType === 'folder') {
+    itemsRef.child(draggedId).child('groupId').set(targetId);
+    return;
+  }
+
+  if (targetType === 'item') {
+    if (draggedId === targetId) return;
+    const targetItem = itemsCache[targetId];
+    if (!targetItem) return;
+    if (targetItem.groupId) {
+      itemsRef.child(draggedId).child('groupId').set(targetItem.groupId);
+      return;
+    }
+    const gid = 'group_' + Date.now();
+    itemsRef.child(targetId).child('groupId').set(gid);
+    itemsRef.child(draggedId).child('groupId').set(gid);
+  }
 }
 
 /* ====================== ADD / MANUAL ENTRY FLOW ====================== */
@@ -737,6 +867,7 @@ function reviewRow(b, i){
         </div>
         <div class="full"><span class="field-label">How to use it</span><input data-field="howToUse" value="${(b.howToUse||'').replace(/"/g,'&quot;')}"></div>
         <div class="full"><span class="field-label">Notes</span><input data-field="notes" value="${(b.notes||'').replace(/"/g,'&quot;')}"></div>
+        <div class="full"><span class="field-label">Explain it (shows on hover over a "?")</span><input data-field="explainer" value="${(b.explainer||'').replace(/"/g,'&quot;')}" placeholder="e.g. what this jargon term actually means"></div>
       </div>
     </div>
   </div>`;
@@ -760,6 +891,7 @@ function saveReview(name, type, owner, provider, annualFee, existingId){
       activated: false,
       howToUse: get('howToUse'),
       notes: get('notes'),
+      explainer: get('explainer'),
       featured: true
     };
   });
