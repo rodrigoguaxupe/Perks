@@ -169,6 +169,14 @@
   }
   .switch-btn.on .knob{left:18px;}
 
+  .inline-edit{
+    font-family:inherit;font-size:inherit;color:inherit;background:var(--paper-dim);
+    border:1px solid var(--line);border-radius:4px;padding:1px 5px;width:auto;
+  }
+  .inline-edit:focus{outline:none;border-color:var(--brass-deep);background:var(--paper);}
+  .fee-edit{width:90px;font-size:12px;}
+  .value-edit{width:150px;font-weight:600;color:var(--brass-deep);text-align:right;}
+
   .item-body-actions{display:flex;gap:14px;padding:10px 0 4px;font-size:12px;}
   .item-body-actions button{background:none;border:none;color:var(--ink-soft);cursor:pointer;padding:0;text-decoration:underline;font-family:inherit;font-size:12px;}
   .item-body-actions button:hover{color:var(--ink);}
@@ -250,7 +258,7 @@ const SEED = {
     category: "card",
     owner: "Rodrigo",
     provider: "Chase",
-    annualFee: "$550/yr",
+    annualFee: "$795/yr",
     anniversaryDate: null,
     benefits: {
       b1: {name:"Annual travel credit", kind:"credit", value:"$300/yr", resetPeriod:"annual_anniversary", resetDetail:"Resets on your account anniversary, not Jan 1", activationRequired:false, howToUse:"Applies automatically to airfare, hotels, car rentals, cruises, taxis, tolls, parking.", notes:""},
@@ -390,6 +398,10 @@ itemsRef.once('value').then(snap => {
   Object.entries(SEED).forEach(([key, val]) => {
     if (!existing[key]) updates[key] = val;
   });
+  // One-time correction: Chase Sapphire Reserve's fee rose from $550 to $795 in June 2025.
+  if (existing.card_csr && existing.card_csr.annualFee !== '$795/yr') {
+    updates['card_csr/annualFee'] = '$795/yr';
+  }
   if (Object.keys(updates).length) {
     itemsRef.update(updates);
   }
@@ -524,7 +536,7 @@ function renderItem(id, item){
     <div class="item-head" data-toggle="${id}">
       <div class="item-head-left">
         <div class="item-name">${item.name}</div>
-        <div class="item-sub">${item.owner ? item.owner + ' · ' : ''}${item.provider || ''}${item.annualFee ? ' · ' + item.annualFee : ''}</div>
+        <div class="item-sub">${item.owner ? item.owner + ' · ' : ''}${item.provider || ''}${editMode ? ` · <input class="inline-edit fee-edit" data-edit-field="${id}|annualFee" value="${(item.annualFee||'').replace(/"/g,'&quot;')}" placeholder="annual fee">` : (item.annualFee ? ' · ' + item.annualFee : '')}</div>
         <div class="item-controls">
           <button data-edit-toggle="${id}">${editMode ? 'Done editing' : 'Edit'}</button>
           ${hiddenCount > 0 ? `<button data-showall-toggle="${id}">${showAll ? 'Show less' : `Show all (${hiddenCount} hidden)`}</button>` : ''}
@@ -556,7 +568,7 @@ function renderBenefit(itemId,bid,b,item,editMode){
     <div class="benefit-main">
       <div class="benefit-name-line">
         <span class="benefit-name">${b.name}</span>
-        <span class="benefit-value">${b.value || ''}</span>
+        <span class="benefit-value">${editMode ? `<input class="inline-edit value-edit" data-edit-field="${itemId}|${bid}|value" value="${(b.value||'').replace(/"/g,'&quot;')}">` : (b.value || '')}</span>
       </div>
       <div class="benefit-meta">
         ${b.resetDetail || periodEndLabel(b) || ''}
@@ -589,6 +601,19 @@ function attachItemHandlers(){
       const [itemId,bid] = el.dataset.activate.split('|');
       const current = itemsCache[itemId].benefits[bid].activated;
       itemsRef.child(`${itemId}/benefits/${bid}/activated`).set(!current);
+    };
+  });
+  document.querySelectorAll('[data-edit-field]').forEach(el=>{
+    el.onclick = (e) => e.stopPropagation();
+    el.onchange = (e) => {
+      const parts = el.dataset.editField.split('|');
+      if (parts.length === 2) {
+        const [itemId, field] = parts;
+        itemsRef.child(`${itemId}/${field}`).set(e.target.value);
+      } else if (parts.length === 3) {
+        const [itemId, bid, field] = parts;
+        itemsRef.child(`${itemId}/benefits/${bid}/${field}`).set(e.target.value);
+      }
     };
   });
   document.querySelectorAll('[data-plug]').forEach(el=>{
