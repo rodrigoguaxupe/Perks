@@ -7,7 +7,7 @@
 <link rel="manifest" href="data:application/json,{%22name%22:%22Perks%20to%20Use%22,%22short_name%22:%22Perks%22,%22display%22:%22standalone%22,%22start_url%22:%22.%22,%22background_color%22:%22%23FAF7F0%22,%22theme_color%22:%221B2430%22}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -30,13 +30,13 @@
   body{
     background:var(--paper);
     color:var(--ink);
-    font-family:'IBM Plex Mono', monospace;
+    font-family:'Space Mono', monospace;
     font-size:15px;
     line-height:1.6;
     -webkit-font-smoothing:antialiased;
   }
   h1,h2,h3,.serif{
-    font-family:'Source Serif 4', serif;
+    font-family:'Fraunces', serif;
     color:var(--ink);
     margin:0;
   }
@@ -49,7 +49,7 @@
   .hero h1{font-size:34px;font-weight:600;letter-spacing:-0.01em;}
   .hero .lede{max-width:52ch;color:var(--ink-soft);margin-top:10px;font-size:14.5px;}
   .hero-stats{display:flex;gap:28px;margin-top:24px;flex-wrap:wrap;}
-  .stat .num{font-family:'Source Serif 4',serif;font-size:28px;font-weight:600;}
+  .stat .num{font-family:'Fraunces',serif;font-size:28px;font-weight:600;}
   .stat .label{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
   .stat.warn .num{color:var(--rust);}
   .stat.good .num{color:var(--sage);}
@@ -73,6 +73,22 @@
   .btn.secondary:hover{border-color:var(--ink);}
   .btn.small{padding:5px 10px;font-size:12.5px;}
   .btn:disabled{opacity:.5;cursor:default;}
+
+  .owner-toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+  .owner-toggle button{
+    padding:10px 14px;border:none;background:var(--paper);font-family:inherit;font-size:13.5px;
+    cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);
+  }
+  .owner-toggle button:last-child{border-right:none;}
+  .owner-toggle button.active{background:var(--ink);color:var(--paper);}
+
+  .owner-section{margin-bottom:44px;}
+  .owner-section-head{display:flex;align-items:baseline;gap:10px;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid var(--ink);}
+  .owner-section-head h2{font-family:'Fraunces',serif;font-size:24px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink);}
+  .owner-section-head .owner-value{font-size:13px;color:var(--brass-deep);font-weight:600;}
+  .owner-section.owner-shared .owner-section-head{border-bottom-color:var(--brass);}
+  .owner-section.owner-rodrigo .owner-section-head{border-bottom-color:var(--sage);}
+  .owner-section.owner-karina .owner-section-head{border-bottom-color:var(--rust);}
   .add-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px;}
   .claude-link{font-size:13px;color:var(--ink-soft);text-decoration:none;border-bottom:1px dashed var(--line);}
   .claude-link:hover{color:var(--brass-deep);border-color:var(--brass-deep);}
@@ -96,13 +112,13 @@
 
   /* ---- Categories ---- */
   .category{margin-bottom:36px;}
-  .category h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-weight:600;margin-bottom:12px;}
+  .category h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-family:'Space Mono',monospace;font-weight:600;margin-bottom:12px;}
   .category h2 .count{color:var(--line);font-weight:400;}
   .item-card{border:1px solid var(--line);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;background:var(--paper);}
   .item-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;gap:10px;}
   .item-head:hover{background:var(--paper-dim);}
   .item-head-left{min-width:0;}
-  .item-name{font-family:'Source Serif 4',serif;font-size:18px;font-weight:600;}
+  .item-name{font-family:'Fraunces',serif;font-size:18px;font-weight:600;}
   .item-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
   .item-head-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
   .value-tag{font-size:12.5px;color:var(--brass-deep);font-weight:600;}
@@ -127,6 +143,23 @@
   .activate-toggle{font-size:11.5px;padding:3px 8px;border-radius:4px;border:1px solid var(--line);background:transparent;cursor:pointer;color:var(--ink-soft);margin-top:5px;}
   .activate-toggle.on{border-color:var(--sage);color:var(--sage);}
 
+  .item-controls{display:flex;gap:10px;margin-top:6px;}
+  .item-controls button{
+    background:none;border:none;padding:0;font-family:inherit;font-size:11.5px;color:var(--ink-soft);
+    cursor:pointer;text-decoration:underline;
+  }
+  .item-controls button:hover{color:var(--ink);}
+  .switch-btn{
+    width:30px;height:16px;border-radius:8px;border:none;cursor:pointer;position:relative;
+    background:var(--rust);flex-shrink:0;margin-top:4px;padding:0;transition:background .15s ease;
+  }
+  .switch-btn.on{background:var(--sage);}
+  .switch-btn .knob{
+    position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;
+    background:var(--paper);transition:left .15s ease;
+  }
+  .switch-btn.on .knob{left:16px;}
+
   .item-body-actions{display:flex;gap:14px;padding:10px 0 4px;font-size:12px;}
   .item-body-actions button{background:none;border:none;color:var(--ink-soft);cursor:pointer;padding:0;text-decoration:underline;font-family:inherit;font-size:12px;}
   .item-body-actions button:hover{color:var(--ink);}
@@ -144,7 +177,7 @@
 
   <header class="hero">
     <h1>Perks to Use</h1>
-    <p class="lede">Every card perk, credit, and membership Rodrigo &amp; Karina are owed — before it quietly expires.</p>
+    <button class="btn" id="addToggleBtn">+ Add something you own</button>
     <div class="hero-stats">
       <div class="stat good"><div class="num" id="statValue">—</div><div class="label">tracked annual value</div></div>
       <div class="stat warn"><div class="num" id="statUnused">—</div><div class="label">unused this period</div></div>
@@ -152,8 +185,7 @@
     </div>
   </header>
 
-  <section class="add-panel">
-    <h2>Add something you own</h2>
+  <section class="add-panel" id="addPanel" hidden>
     <p class="hint">Type a card, membership, or account. Claude researches its current real benefits before anything gets saved.</p>
     <div class="add-row">
       <input type="text" id="itemNameInput" placeholder="e.g. Costco Membership, Delta SkyMiles Platinum" />
@@ -162,11 +194,11 @@
         <option value="membership">Membership</option>
         <option value="utility">Utility / Subscription</option>
       </select>
-      <select id="itemOwnerSelect">
-        <option value="Shared">Shared</option>
-        <option value="Rodrigo">Rodrigo</option>
-        <option value="Karina">Karina</option>
-      </select>
+      <div class="owner-toggle" id="ownerToggle">
+        <button type="button" data-owner="Shared" class="active">Shared</button>
+        <button type="button" data-owner="Rodrigo">Rodrigo</button>
+        <button type="button" data-owner="Karina">Karina</button>
+      </div>
       <button class="btn" id="researchBtn">Research with AI</button>
       <button class="btn secondary" id="manualBtn">Add manually</button>
     </div>
@@ -176,20 +208,7 @@
     <div id="reviewScreen" hidden></div>
   </section>
 
-  <section class="categories" id="categories">
-    <div class="category" data-cat="card">
-      <h2>Cards <span class="count" id="count-card"></span></h2>
-      <div class="item-list" id="list-card"></div>
-    </div>
-    <div class="category" data-cat="membership">
-      <h2>Memberships <span class="count" id="count-membership"></span></h2>
-      <div class="item-list" id="list-membership"></div>
-    </div>
-    <div class="category" data-cat="utility">
-      <h2>Utilities &amp; subscriptions <span class="count" id="count-utility"></span></h2>
-      <div class="item-list" id="list-utility"></div>
-    </div>
-  </section>
+  <section class="owner-sections" id="ownerSections"></section>
 
 </div>
 
@@ -402,28 +421,19 @@ itemsRef.on('value', snap => {
 });
 
 function render(){
-  const lists = { card: [], membership: [], utility: [] };
   let totalValue = 0, unusedCount = 0, totalCount = 0;
-
-  Object.entries(itemsCache).forEach(([id, item]) => {
-    lists[item.category] = lists[item.category] || [];
-    lists[item.category].push([id, item]);
-    totalCount++;
-  });
+  const CAT_LABELS = { card: 'Cards', membership: 'Memberships', utility: 'Utilities and subscriptions' };
+  const OWNER_ORDER = ['Rodrigo', 'Karina'];
 
   Object.values(itemsCache).forEach(item => {
+    totalCount++;
     Object.values(item.benefits || {}).forEach(b => {
       if (b.kind !== 'credit') return;
       const base = parseAnnualValue(b.value);
-      if (b.resetPeriod === 'monthly') totalValue += base * 12;
-      else totalValue += base;
-    });
-    Object.values(item.benefits||{}).forEach(b=>{
-      if(b.kind==='credit'){
-        const key = currentPeriodKey(b, item);
-        const used = (b.usedPeriods && b.usedPeriods[key]) || false;
-        if(!used) unusedCount++;
-      }
+      totalValue += (b.resetPeriod === 'monthly') ? base * 12 : base;
+      const key = currentPeriodKey(b, item);
+      const used = (b.usedPeriods && b.usedPeriods[key]) || false;
+      if (!used) unusedCount++;
     });
   });
 
@@ -431,30 +441,55 @@ function render(){
   document.getElementById('statUnused').textContent = unusedCount;
   document.getElementById('statCount').textContent = totalCount;
 
-  ['card','membership','utility'].forEach(cat => {
-    const container = document.getElementById('list-'+cat);
-    const arr = lists[cat] || [];
-    document.getElementById('count-'+cat).textContent = arr.length ? `(${arr.length})` : '';
-    if (arr.length === 0){
-      container.innerHTML = `<div class="empty">Nothing here yet.</div>`;
-      return;
-    }
-    container.innerHTML = arr.map(([id, item]) => renderItem(id, item)).join('');
-  });
+  const container = document.getElementById('ownerSections');
+  container.innerHTML = OWNER_ORDER.map(owner => {
+    const cats = { card: [], membership: [], utility: [] };
+    Object.entries(itemsCache).forEach(([id, item]) => {
+      const itemOwner = item.owner || 'Shared';
+      if (itemOwner !== owner && itemOwner !== 'Shared') return;
+      cats[item.category] = cats[item.category] || [];
+      cats[item.category].push([id, item]);
+    });
+    const catHtml = ['card','membership','utility'].map(cat => {
+      const arr = cats[cat] || [];
+      if (arr.length === 0) return '';
+      return `
+        <div class="category">
+          <h2>${CAT_LABELS[cat]} <span class="count">(${arr.length})</span></h2>
+          <div class="item-list">${arr.map(([id,item]) => renderItem(id,item)).join('')}</div>
+        </div>`;
+    }).join('');
+    const hasItems = Object.values(cats).some(arr => arr.length);
+    return `
+      <div class="owner-section owner-${owner.toLowerCase()}">
+        <div class="owner-section-head"><h2>${owner}</h2></div>
+        ${hasItems ? catHtml : `<div class="empty">Nothing here yet.</div>`}
+      </div>`;
+  }).join('');
 
   attachItemHandlers();
 }
 
+const editItems = new Set();
+const showAllItems = new Set();
+
 function renderItem(id, item){
-  const benefits = Object.entries(item.benefits || {});
-  const annualVal = benefits.reduce((sum,[,b])=>{
+  const allBenefits = Object.entries(item.benefits || {});
+  const annualVal = allBenefits.reduce((sum,[,b])=>{
     if(b.kind!=='credit') return sum;
     const base = parseAnnualValue(b.value);
     return sum + (b.resetPeriod==='monthly' ? base*12 : base);
   },0);
 
-  const benefitRows = benefits.length ? benefits.map(([bid,b]) => renderBenefit(id,bid,b,item)).join('') :
-    `<div class="empty">No benefits added yet. Use "Research with AI" above with this item's name, or add one manually.</div>`;
+  const editMode = editItems.has(id);
+  const showAll = showAllItems.has(id);
+  const visibleBenefits = (editMode || showAll) ? allBenefits : allBenefits.filter(([,b]) => b.featured !== false);
+
+  const benefitRows = visibleBenefits.length ? visibleBenefits.map(([bid,b]) => renderBenefit(id,bid,b,item,editMode)).join('') :
+    (allBenefits.length ? `<div class="empty">Everything here is hidden. Tap "Edit" to bring benefits back.</div>` :
+    `<div class="empty">No benefits added yet. Use "Research with AI" above with this item's name, or add one manually.</div>`);
+
+  const hiddenCount = allBenefits.length - allBenefits.filter(([,b]) => b.featured !== false).length;
 
   return `
   <div class="item-card" data-id="${id}">
@@ -462,6 +497,10 @@ function renderItem(id, item){
       <div class="item-head-left">
         <div class="item-name">${item.name}</div>
         <div class="item-sub">${item.owner ? item.owner + ' · ' : ''}${item.provider || ''}${item.annualFee ? ' · ' + item.annualFee : ''}</div>
+        <div class="item-controls">
+          <button data-edit-toggle="${id}">${editMode ? 'Done editing' : 'Edit'}</button>
+          ${hiddenCount > 0 ? `<button data-showall-toggle="${id}">${showAll ? 'Show less' : `Show all (${hiddenCount} hidden)`}</button>` : ''}
+        </div>
       </div>
       <div class="item-head-right">
         ${annualVal ? `<span class="value-tag">${fmtMoney(annualVal)}/yr</span>` : ''}
@@ -478,12 +517,14 @@ function renderItem(id, item){
   </div>`;
 }
 
-function renderBenefit(itemId,bid,b,item){
+function renderBenefit(itemId,bid,b,item,editMode){
   const key = currentPeriodKey(b,item);
   const used = (b.usedPeriods && b.usedPeriods[key]) || false;
   const isCredit = b.kind === 'credit';
+  const featured = b.featured !== false;
   return `
   <div class="benefit-row">
+    ${editMode ? `<button class="switch-btn ${featured?'on':''}" data-plug="${itemId}|${bid}" title="${featured?'Featured — tap to hide':'Hidden — tap to feature'}"><span class="knob"></span></button>` : ''}
     ${isCredit ? `<input type="checkbox" data-used="${itemId}|${bid}|${key}" ${used?'checked':''}>` : `<span style="width:16px"></span>`}
     <div class="benefit-main">
       <div class="benefit-name-line">
@@ -519,6 +560,32 @@ function attachItemHandlers(){
       itemsRef.child(`${itemId}/benefits/${bid}/activated`).set(!current);
     };
   });
+  document.querySelectorAll('[data-plug]').forEach(el=>{
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const [itemId,bid] = el.dataset.plug.split('|');
+      const current = itemsCache[itemId].benefits[bid].featured !== false;
+      itemsRef.child(`${itemId}/benefits/${bid}/featured`).set(!current);
+    };
+  });
+  document.querySelectorAll('[data-edit-toggle]').forEach(el=>{
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const id = el.dataset.editToggle;
+      if (editItems.has(id)) editItems.delete(id); else editItems.add(id);
+      render();
+      document.querySelector(`.item-card[data-id="${id}"]`)?.classList.add('open');
+    };
+  });
+  document.querySelectorAll('[data-showall-toggle]').forEach(el=>{
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const id = el.dataset.showallToggle;
+      if (showAllItems.has(id)) showAllItems.delete(id); else showAllItems.add(id);
+      render();
+      document.querySelector(`.item-card[data-id="${id}"]`)?.classList.add('open');
+    };
+  });
   document.querySelectorAll('[data-delete]').forEach(el=>{
     el.onclick = (e) => {
       e.stopPropagation();
@@ -532,7 +599,7 @@ function attachItemHandlers(){
       const item = itemsCache[id];
       document.getElementById('itemNameInput').value = item.name;
       document.getElementById('itemTypeSelect').value = item.category;
-      document.getElementById('itemOwnerSelect').value = item.owner || 'Shared';
+      ownerSelect.value = item.owner || 'Shared';
       window.scrollTo({top:0, behavior:'smooth'});
       runResearch(id);
     };
@@ -542,9 +609,29 @@ function attachItemHandlers(){
 /* ====================== ADD / RESEARCH FLOW ====================== */
 const nameInput = document.getElementById('itemNameInput');
 const typeSelect = document.getElementById('itemTypeSelect');
-const ownerSelect = document.getElementById('itemOwnerSelect');
 const reviewScreen = document.getElementById('reviewScreen');
 const claudeLink = document.getElementById('claudeLink');
+
+const addPanel = document.getElementById('addPanel');
+const addToggleBtn = document.getElementById('addToggleBtn');
+addToggleBtn.onclick = () => {
+  addPanel.hidden = !addPanel.hidden;
+  addToggleBtn.textContent = addPanel.hidden ? '+ Add something you own' : '− Close';
+  if (!addPanel.hidden) nameInput.focus();
+};
+
+let selectedOwner = 'Shared';
+const ownerToggle = document.getElementById('ownerToggle');
+ownerToggle.querySelectorAll('button').forEach(btn => {
+  btn.onclick = () => {
+    selectedOwner = btn.dataset.owner;
+    ownerToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+  };
+});
+const ownerSelect = { get value(){ return selectedOwner; }, set value(v){
+  selectedOwner = v;
+  ownerToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.owner === v));
+}};
 
 function updateClaudeLink(){
   const name = nameInput.value.trim() || "this item";
@@ -578,10 +665,42 @@ async function runResearch(existingId){
     });
     if(!res.ok) throw new Error('Research request failed');
     const data = await res.json();
-    showReview(data, name, type, owner, existingId);
+    await saveResearchedItem(data, name, type, owner, existingId);
   }catch(err){
     reviewScreen.innerHTML = `<div class="loading">Couldn't complete research (${err.message}). Try "Ask Claude directly" instead.</div>`;
   }
+}
+
+async function saveResearchedItem(data, name, type, owner, existingId){
+  const benefitsIn = data.benefits || [];
+  const benefits = {};
+  benefitsIn.forEach((b,i) => {
+    benefits['b'+(i+1)] = {
+      name: b.name || '',
+      value: b.value || '',
+      kind: b.kind === 'perk' ? 'perk' : 'credit',
+      resetPeriod: b.resetPeriod || 'ongoing',
+      resetDetail: '',
+      activationRequired: !!b.activationRequired,
+      activated: false,
+      howToUse: b.howToUse || '',
+      notes: b.notes || '',
+      featured: true
+    };
+  });
+  const id = existingId || ('item_' + Date.now());
+  const payload = {
+    name, category: type, owner: owner || 'Shared', provider: data.provider || '', annualFee: data.annualFee || null, benefits
+  };
+  await itemsRef.child(id).set(payload);
+  reviewScreen.innerHTML = `<div class="loading">Added ${data.displayName || name} with ${benefitsIn.length} benefit${benefitsIn.length===1?'':'s'}. Use "Edit" on the card to hide any you don't want featured.</div>`;
+  setTimeout(() => {
+    reviewScreen.hidden = true;
+    reviewScreen.innerHTML = '';
+    addPanel.hidden = true;
+    addToggleBtn.textContent = '+ Add something you own';
+    nameInput.value = '';
+  }, 1600);
 }
 
 function showReview(data, name, type, owner, existingId){
@@ -656,7 +775,8 @@ function saveReview(name, type, owner, provider, annualFee, existingId){
       activationRequired: get('activationRequired') === 'true',
       activated: false,
       howToUse: get('howToUse'),
-      notes: get('notes')
+      notes: get('notes'),
+      featured: true
     };
   });
 
