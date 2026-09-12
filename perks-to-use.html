@@ -321,7 +321,7 @@ const SEED = {
   membership_prime: {
     name: "Amazon Prime",
     category: "membership",
-    owner: "Shared",
+    owner: "Rodrigo",
     provider: "Amazon",
     annualFee: "$139/yr",
     benefits: {
@@ -346,7 +346,7 @@ const SEED = {
   utility_verizon_wireless: {
     name: "Verizon Wireless",
     category: "utility",
-    owner: "Shared",
+    owner: "Rodrigo",
     provider: "Verizon",
     annualFee: null,
     benefits: {}
@@ -354,7 +354,7 @@ const SEED = {
   utility_verizon_fios: {
     name: "Verizon Fios",
     category: "utility",
-    owner: "Shared",
+    owner: "Rodrigo",
     provider: "Verizon",
     annualFee: null,
     benefits: {}
@@ -362,7 +362,7 @@ const SEED = {
   membership_costco: {
     name: "Costco Membership",
     category: "membership",
-    owner: "Shared",
+    owner: "Rodrigo",
     provider: "Costco",
     annualFee: "$65/yr (Gold Star)",
     benefits: {
@@ -434,6 +434,13 @@ itemsRef.once('value').then(snap => {
   if (existing.card_csr && existing.card_csr.annualFee !== '$795/yr') {
     updates['card_csr/annualFee'] = '$795/yr';
   }
+  // One-time correction: these are Rodrigo's alone, not shared — fixes them showing (and being
+  // deletable) from both columns.
+  ['membership_prime', 'utility_verizon_wireless', 'utility_verizon_fios'].forEach(key => {
+    if (existing[key] && existing[key].owner === 'Shared') {
+      updates[`${key}/owner`] = 'Rodrigo';
+    }
+  });
   // One-time correction: backfill explainer tooltips on the Omnicom benefits item.
   if (existing.membership_omnicom_benefits && existing.membership_omnicom_benefits.benefits) {
     const omniBenefits = existing.membership_omnicom_benefits.benefits;
