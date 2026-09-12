@@ -198,15 +198,16 @@
   .info-icon:hover{border-color:var(--brass-deep);color:var(--brass-deep);}
 
   .group-block{border:2px solid var(--brass);border-radius:var(--radius);padding:10px;margin-bottom:14px;background:var(--paper-dim);}
-  .group-name-label{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:var(--brass-deep);margin-bottom:8px;padding:0 2px;}
-  .group-name-edit{font-family:'Fraunces',serif;font-size:16px;font-weight:600;width:100%;margin-bottom:8px;padding:5px 8px;}
+  .group-title-bar{display:flex;align-items:center;gap:6px;margin-bottom:10px;padding:8px;border-radius:6px;background:var(--paper);border:1px dashed var(--brass);}
+  .group-name-edit{font-family:'Fraunces',serif;font-size:16px;font-weight:600;flex:1;border:none;background:none;padding:2px 4px;}
+  .group-name-edit:focus{outline:none;background:var(--paper-dim);border-radius:4px;}
   .group-block .item-card{margin-bottom:8px;}
   .group-block .item-card:last-child{margin-bottom:0;}
   .ungroup-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:12px;padding:6px 12px;border-radius:6px;}
   .ungroup-btn:hover{border-color:var(--ink);color:var(--ink);}
 
   [data-drop-id].drag-over{outline:2px dashed var(--brass-deep);outline-offset:-2px;background:var(--paper-dim);}
-  [data-drag-id]{cursor:grab;}
+  [data-drag-id]{cursor:grab;user-select:none;-webkit-user-select:none;-webkit-user-drag:element;}
 
   .item-body-actions{display:flex;justify-content:flex-end;gap:10px;padding:12px 0 4px;border-top:1px solid var(--paper-dim);margin-top:4px;}
   .delete-btn{
@@ -250,6 +251,10 @@
         <button type="button" data-owner="Rodrigo">Rodrigo</button>
         <button type="button" data-owner="Karina">Karina</button>
       </div>
+      <select id="itemBucketSelect">
+        <option value="">No bucket</option>
+        <option value="__new__">+ New bucket…</option>
+      </select>
       <button class="btn" id="manualBtn">Add</button>
     </div>
     <div class="add-footer">
@@ -569,7 +574,24 @@ function render(){
   }).join('');
 
   attachItemHandlers();
+  updateBucketSelectOptions();
   window.scrollTo(0, scrollPos);
+}
+
+function updateBucketSelectOptions(){
+  const sel = document.getElementById('itemBucketSelect');
+  if (!sel) return;
+  const currentVal = sel.value;
+  const gids = new Set();
+  Object.values(itemsCache).forEach(it => { if (it.groupId) gids.add(it.groupId); });
+  const options = ['<option value="">No bucket</option>'];
+  Array.from(gids).sort().forEach(gid => {
+    const name = (groupsCache[gid] && groupsCache[gid].name) || 'Unnamed bucket';
+    options.push(`<option value="${gid}">${name}</option>`);
+  });
+  options.push('<option value="__new__">+ New bucket…</option>');
+  sel.innerHTML = options.join('');
+  if ([...sel.options].some(o => o.value === currentVal)) sel.value = currentVal;
 }
 
 const editItems = new Set();
@@ -589,26 +611,19 @@ function clusterByGroup(arr){
     }
   });
   Object.entries(groups).forEach(([gid, members]) => {
-    if (members.length >= 2) {
-      units.push({type:'folder', groupId:gid, items:members});
-    } else {
-      members.forEach(([id,item]) => units.push({type:'item', id, item}));
-    }
+    units.push({type:'folder', groupId:gid, items:members});
   });
   return units;
 }
 
-
 function renderGroupBlock(unit){
   const gid = unit.groupId;
   const name = (groupsCache[gid] && groupsCache[gid].name) || '';
-  const anyEditing = unit.items.some(([id]) => editItems.has(id));
-  const titleHtml = anyEditing
-    ? `<input class="inline-edit group-name-edit" data-group-rename="${gid}" value="${name.replace(/"/g,'&quot;')}" placeholder="Name this group (optional)">`
-    : (name ? `<div class="group-name-label">🗂️ ${name}</div>` : '');
   return `
-  <div class="group-block" data-drop-id="folder:${gid}">
-    ${titleHtml}
+  <div class="group-block">
+    <div class="group-title-bar" data-drop-id="folder:${gid}">
+      🗂️ <input class="inline-edit group-name-edit" data-group-rename="${gid}" value="${name.replace(/"/g,'&quot;')}" placeholder="Name this bucket">
+    </div>
     ${unit.items.map(([id,item]) => renderItem(id,item)).join('')}
   </div>`;
 }
@@ -823,8 +838,8 @@ function attachItemHandlers(){
       itemsRef.child(id).child('groupId').remove().then(() => {
         if (!gid) return;
         const remaining = Object.entries(itemsCache).filter(([iid,it]) => iid!==id && it.groupId===gid);
-        if (remaining.length < 2) {
-          remaining.forEach(([iid]) => itemsRef.child(iid).child('groupId').remove());
+        if (remaining.length === 0) {
+          groupsRef.child(gid).remove();
         }
       });
     };
@@ -838,7 +853,8 @@ function attachItemHandlers(){
     };
   });
   document.querySelectorAll('[data-drop-id]').forEach(el=>{
-    el.ondragover = (e) => { e.preventDefault(); el.classList.add('drag-over'); };
+    el.ondragenter = (e) => { e.preventDefault(); };
+    el.ondragover = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; el.classList.add('drag-over'); };
     el.ondragleave = () => el.classList.remove('drag-over');
     el.ondrop = (e) => {
       e.preventDefault();
@@ -987,12 +1003,25 @@ function saveReview(name, type, owner, provider, annualFee, existingId){
   const payload = {
     name, category: type, owner: owner || 'Shared', provider: provider || '', annualFee: annualFee || null, benefits
   };
-  itemsRef.child(id).set(payload).then(()=>{
+
+  const bucketSel = document.getElementById('itemBucketSelect');
+  const bucketVal = bucketSel ? bucketSel.value : '';
+  let bucketWrite = Promise.resolve();
+  if (bucketVal === '__new__') {
+    const gid = 'group_' + Date.now();
+    payload.groupId = gid;
+    bucketWrite = groupsRef.child(gid).set({ name: '' });
+  } else if (bucketVal) {
+    payload.groupId = bucketVal;
+  }
+
+  bucketWrite.then(() => itemsRef.child(id).set(payload)).then(()=>{
     reviewScreen.hidden = true;
     reviewScreen.innerHTML = '';
     addPanel.hidden = true;
     addToggleBtn.classList.remove('open');
     nameInput.value = '';
+    if (bucketSel) bucketSel.value = '';
   });
 }
 
