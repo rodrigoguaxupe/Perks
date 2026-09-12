@@ -198,6 +198,8 @@
   .info-icon:hover{border-color:var(--brass-deep);color:var(--brass-deep);}
 
   .group-block{border:2px solid var(--brass);border-radius:var(--radius);padding:10px;margin-bottom:14px;background:var(--paper-dim);}
+  .group-name-label{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:var(--brass-deep);margin-bottom:8px;padding:0 2px;}
+  .group-name-edit{font-family:'Fraunces',serif;font-size:16px;font-weight:600;width:100%;margin-bottom:8px;padding:5px 8px;}
   .group-block .item-card{margin-bottom:8px;}
   .group-block .item-card:last-child{margin-bottom:0;}
   .ungroup-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);cursor:pointer;font-family:inherit;font-size:12px;padding:6px 12px;border-radius:6px;}
@@ -279,6 +281,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const itemsRef = db.ref('items');
+const groupsRef = db.ref('groups');
 
 /* ====================== SEED DATA ======================
    Runs once if the database is empty. Real benefits researched
@@ -505,9 +508,14 @@ function periodEndLabel(benefit){
 
 /* ====================== RENDER ====================== */
 let itemsCache = {};
+let groupsCache = {};
 
 itemsRef.on('value', snap => {
   itemsCache = snap.val() || {};
+  render();
+});
+groupsRef.on('value', snap => {
+  groupsCache = snap.val() || {};
   render();
 });
 
@@ -593,8 +601,14 @@ function clusterByGroup(arr){
 
 function renderGroupBlock(unit){
   const gid = unit.groupId;
+  const name = (groupsCache[gid] && groupsCache[gid].name) || '';
+  const anyEditing = unit.items.some(([id]) => editItems.has(id));
+  const titleHtml = anyEditing
+    ? `<input class="inline-edit group-name-edit" data-group-rename="${gid}" value="${name.replace(/"/g,'&quot;')}" placeholder="Name this group (optional)">`
+    : (name ? `<div class="group-name-label">🗂️ ${name}</div>` : '');
   return `
   <div class="group-block" data-drop-id="folder:${gid}">
+    ${titleHtml}
     ${unit.items.map(([id,item]) => renderItem(id,item)).join('')}
   </div>`;
 }
@@ -603,7 +617,11 @@ function buildGroupOptions(excludeId){
   return Object.entries(itemsCache)
     .filter(([iid]) => iid !== excludeId)
     .sort((a,b) => a[1].name.localeCompare(b[1].name))
-    .map(([iid,it]) => `<option value="${iid}">${it.name} (${it.owner||'Shared'})</option>`)
+    .map(([iid,it]) => {
+      const groupName = it.groupId && groupsCache[it.groupId] && groupsCache[it.groupId].name;
+      const tag = it.groupId ? ` — in a bucket${groupName ? ` (${groupName})` : ''}` : '';
+      return `<option value="${iid}">${it.name} (${it.owner||'Shared'})${tag}</option>`;
+    })
     .join('');
 }
 
@@ -719,6 +737,12 @@ function attachItemHandlers(){
       const [itemId,bid] = el.dataset.activate.split('|');
       const current = itemsCache[itemId].benefits[bid].activated;
       itemsRef.child(`${itemId}/benefits/${bid}/activated`).set(!current);
+    };
+  });
+  document.querySelectorAll('[data-group-rename]').forEach(el=>{
+    el.onclick = (e) => e.stopPropagation();
+    el.onchange = (e) => {
+      groupsRef.child(el.dataset.groupRename).child('name').set(e.target.value);
     };
   });
   document.querySelectorAll('[data-edit-field]').forEach(el=>{
