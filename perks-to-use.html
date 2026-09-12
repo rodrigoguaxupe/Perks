@@ -156,7 +156,16 @@
   .activate-toggle{font-size:11.5px;padding:3px 8px;border-radius:4px;border:1px solid var(--line);background:transparent;cursor:pointer;color:var(--ink-soft);margin-top:5px;}
   .activate-toggle.on{border-color:var(--sage);color:var(--sage);}
 
-  .item-controls{display:flex;gap:10px;margin-top:6px;}
+  .item-controls{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;}
+  .group-picker{display:flex;gap:8px;margin-top:8px;align-items:center;}
+  .group-picker select{
+    font-family:inherit;font-size:12.5px;padding:5px 8px;border:1px solid var(--line);
+    border-radius:5px;background:var(--paper);max-width:220px;
+  }
+  .group-picker button{
+    font-family:inherit;font-size:12px;padding:5px 12px;border-radius:5px;border:1px solid var(--ink);
+    background:var(--ink);color:var(--paper);cursor:pointer;
+  }
   .item-controls button{
     background:none;border:none;padding:0;font-family:inherit;font-size:11.5px;color:var(--ink-soft);
     cursor:pointer;text-decoration:underline;
@@ -551,6 +560,7 @@ function render(){
 const editItems = new Set();
 const showAllItems = new Set();
 const openItems = new Set();
+const groupPickerOpen = new Set();
 
 function clusterByGroup(arr){
   const groups = {};
@@ -582,6 +592,28 @@ function renderGroupBlock(unit){
   </div>`;
 }
 
+function buildGroupOptions(excludeId){
+  return Object.entries(itemsCache)
+    .filter(([iid]) => iid !== excludeId)
+    .sort((a,b) => a[1].name.localeCompare(b[1].name))
+    .map(([iid,it]) => `<option value="${iid}">${it.name} (${it.owner||'Shared'})</option>`)
+    .join('');
+}
+
+function joinGroups(idA, idB){
+  const a = itemsCache[idA], b = itemsCache[idB];
+  if (!a || !b || idA === idB) return;
+  if (a.groupId) {
+    itemsRef.child(idB).child('groupId').set(a.groupId);
+  } else if (b.groupId) {
+    itemsRef.child(idA).child('groupId').set(b.groupId);
+  } else {
+    const gid = 'group_' + Date.now();
+    itemsRef.child(idA).child('groupId').set(gid);
+    itemsRef.child(idB).child('groupId').set(gid);
+  }
+}
+
 function renderItem(id, item){
   const allBenefits = Object.entries(item.benefits || {});
   const annualVal = allBenefits.reduce((sum,[,b])=>{
@@ -609,7 +641,16 @@ function renderItem(id, item){
         <div class="item-controls">
           <button data-edit-toggle="${id}">${editMode ? 'Done editing' : 'Edit'}</button>
           ${hiddenCount > 0 ? `<button data-showall-toggle="${id}">${showAll ? 'Show less' : `Show all (${hiddenCount} hidden)`}</button>` : ''}
+          <button data-group-toggle="${id}">${groupPickerOpen.has(id) ? 'Cancel' : 'Group with…'}</button>
         </div>
+        ${groupPickerOpen.has(id) ? `
+        <div class="group-picker">
+          <select data-group-select="${id}">
+            <option value="">Choose an item…</option>
+            ${buildGroupOptions(id)}
+          </select>
+          <button data-group-confirm="${id}">Group</button>
+        </div>` : ''}
       </div>
       <div class="item-head-right">
         ${annualVal ? `<span class="value-tag">${fmtMoney(annualVal)}/yr</span>` : ''}
@@ -718,6 +759,31 @@ function attachItemHandlers(){
       if(confirm('Remove this?')) itemsRef.child(el.dataset.delete).remove();
     };
   });
+  document.querySelectorAll('[data-group-toggle]').forEach(el=>{
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const id = el.dataset.groupToggle;
+      if (groupPickerOpen.has(id)) groupPickerOpen.delete(id); else groupPickerOpen.add(id);
+      openItems.add(id);
+      render();
+    };
+  });
+  document.querySelectorAll('[data-group-confirm]').forEach(el=>{
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const id = el.dataset.groupConfirm;
+      const select = document.querySelector(`[data-group-select="${id}"]`);
+      const targetId = select ? select.value : '';
+      if (targetId) {
+        joinGroups(id, targetId);
+      }
+      groupPickerOpen.delete(id);
+      render();
+    };
+  });
+  document.querySelectorAll('[data-group-select]').forEach(el=>{
+    el.onclick = (e) => e.stopPropagation();
+  });
   document.querySelectorAll('[data-ungroup]').forEach(el=>{
     el.onclick = (e) => {
       e.stopPropagation();
@@ -758,8 +824,7 @@ function handleGroupDrop(draggedRaw, targetRaw){
   const [draggedType, draggedId] = draggedRaw.split(':');
   const [targetType, targetId] = targetRaw.split(':');
   if (draggedType !== 'item') return;
-  const draggedItem = itemsCache[draggedId];
-  if (!draggedItem) return;
+  if (!itemsCache[draggedId]) return;
 
   if (targetType === 'folder') {
     itemsRef.child(draggedId).child('groupId').set(targetId);
@@ -767,16 +832,7 @@ function handleGroupDrop(draggedRaw, targetRaw){
   }
 
   if (targetType === 'item') {
-    if (draggedId === targetId) return;
-    const targetItem = itemsCache[targetId];
-    if (!targetItem) return;
-    if (targetItem.groupId) {
-      itemsRef.child(draggedId).child('groupId').set(targetItem.groupId);
-      return;
-    }
-    const gid = 'group_' + Date.now();
-    itemsRef.child(targetId).child('groupId').set(gid);
-    itemsRef.child(draggedId).child('groupId').set(gid);
+    joinGroups(draggedId, targetId);
   }
 }
 
