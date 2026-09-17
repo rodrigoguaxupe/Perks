@@ -1,0 +1,1081 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rodrigo's Cards</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #eeeeec;
+      --surface: #f8f8f6;
+      --text: #20242a;
+      --muted: #676d75;
+      --border: #d3d4d1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      background: var(--background);
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    main {
+      width: min(100% - 40px, 860px);
+      margin: 0;
+      padding: 56px 0 96px;
+      margin-left: clamp(20px, 9vw, 144px);
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 600;
+      letter-spacing: -0.035em;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .page-actions,
+    .group-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cards {
+      margin-top: 52px;
+    }
+
+    .group-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cards h2 {
+      padding: 0;
+      border: 0;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .group-actions {
+      display: none;
+    }
+
+    #page.is-structure-editing .group-actions {
+      display: flex;
+    }
+
+    .subgroup-list:empty::after {
+      content: "No subgroups yet";
+      display: block;
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      font: 0.8rem/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      text-align: center;
+    }
+
+    #page.is-structure-editing .subgroup {
+      cursor: grab;
+    }
+
+    #page.is-structure-editing .subgroup:active {
+      cursor: grabbing;
+    }
+
+    .subgroup.is-dragging {
+      opacity: 0.35;
+    }
+
+    .subgroup-list.is-drag-target {
+      min-height: 72px;
+      outline: 2px dashed #7c807c;
+      outline-offset: 8px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .card {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 22px 24px;
+    }
+
+    .card h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-actions .header-button {
+      display: none;
+    }
+
+    #page.is-structure-editing .card-actions .header-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .annual-fee {
+      flex: none;
+      margin-right: 6px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .header-button {
+      min-width: 30px;
+      height: 30px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .header-button:hover,
+    .header-button[aria-pressed="true"] {
+      border-color: var(--text);
+      background: var(--text);
+      color: #ffffff;
+    }
+
+    .add-button {
+      padding: 0;
+      font-size: 1.15rem;
+      line-height: 1;
+    }
+
+    .add-benefit-panel {
+      padding: 18px 24px;
+      border-top: 1px solid var(--border);
+      background: #f2f2ef;
+    }
+
+    .add-benefit-panel[hidden] {
+      display: none;
+    }
+
+    .add-benefit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 0.8fr;
+      gap: 10px;
+    }
+
+    .add-benefit-panel input,
+    .add-benefit-panel select {
+      width: 100%;
+      min-width: 0;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--text);
+      font: 0.82rem/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .add-benefit-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .perk-groups {
+      border-top: 1px solid var(--border);
+    }
+
+    .perk-group {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .perk-group:last-child {
+      border-bottom: 0;
+    }
+
+    .perk-group h4 {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .perk-list {
+      display: grid;
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .perk {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      column-gap: 24px;
+      row-gap: 3px;
+      padding: 13px 0;
+      border-top: 1px solid #e5e5e2;
+    }
+
+    .perk:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .perk:last-child {
+      padding-bottom: 0;
+    }
+
+    .perk.is-hidden {
+      display: none;
+    }
+
+    .card.is-editing .perk.is-hidden {
+      display: grid;
+      opacity: 0.45;
+    }
+
+    .perk-name {
+      grid-column: 1;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .perk-detail {
+      grid-column: 1;
+      color: var(--muted);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.75rem;
+      line-height: 1.45;
+    }
+
+    .perk-controls {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: center;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .visibility-toggle {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .visibility-toggle:hover {
+      background: #e8e8e5;
+      color: var(--text);
+    }
+
+    .visibility-toggle svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .card.is-editing .visibility-toggle {
+      display: flex;
+    }
+
+    .perk-toggle {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 28px;
+      cursor: pointer;
+    }
+
+    .perk-toggle input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .switch-track {
+      position: relative;
+      display: block;
+      width: 22px;
+      height: 13px;
+      border: 1px solid #a7aaa7;
+      border-radius: 999px;
+      background: #ffffff;
+      transition: background-color 160ms ease, border-color 160ms ease;
+    }
+
+    .switch-track::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #7a7d79;
+      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+      transition: transform 160ms ease, background-color 160ms ease;
+    }
+
+    .perk-toggle input:checked + .switch-track {
+      border-color: #3c7b55;
+      background: #3c7b55;
+    }
+
+    .perk-toggle input:checked + .switch-track::after {
+      transform: translateX(9px);
+      background: #ffffff;
+    }
+
+    .perk-toggle input:focus-visible + .switch-track {
+      outline: 2px solid var(--text);
+      outline-offset: 3px;
+    }
+
+    .source-note {
+      margin: 16px 24px 22px;
+      color: var(--muted);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    .source-note a {
+      color: inherit;
+      text-underline-offset: 3px;
+    }
+
+    @media (max-width: 560px) {
+      main {
+        width: calc(100% - 32px);
+        margin-left: 16px;
+        padding-top: 36px;
+      }
+
+      .cards {
+        margin-top: 40px;
+      }
+
+      .page-head {
+        align-items: flex-start;
+      }
+
+      .page-actions {
+        padding-top: 3px;
+      }
+
+      .card-top {
+        align-items: flex-start;
+        padding: 20px;
+      }
+
+      .card-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .annual-fee {
+        width: 100%;
+        margin-right: 0;
+        text-align: right;
+      }
+
+      .add-benefit-panel {
+        padding: 16px 20px;
+      }
+
+      .add-benefit-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .perk-group {
+        padding: 22px 20px;
+      }
+
+      .perk {
+        grid-template-columns: minmax(0, 1fr) auto;
+        column-gap: 16px;
+      }
+
+      .source-note {
+        margin-right: 20px;
+        margin-left: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="page">
+    <div class="page-head">
+      <h1>Rodrigo</h1>
+      <div class="page-actions">
+        <button class="header-button add-button" id="addGroupButton" type="button" aria-label="Add a group">+</button>
+        <button class="header-button" id="editPageButton" type="button" aria-pressed="false">Edit</button>
+      </div>
+    </div>
+
+    <div id="groups">
+    <section class="cards group" data-group-id="cards" aria-labelledby="cards-heading">
+      <div class="group-head">
+        <h2 id="cards-heading">Cards</h2>
+        <div class="group-actions">
+          <button class="header-button add-button add-subgroup-button" type="button" aria-label="Add a subgroup to Cards">+</button>
+          <button class="header-button edit-group-button" type="button">Edit</button>
+        </div>
+      </div>
+      <div class="subgroup-list">
+      <article class="card subgroup" data-subgroup-id="chase-sapphire-reserve">
+        <div class="card-top">
+          <h3>Chase Sapphire Reserve</h3>
+          <div class="card-actions">
+            <span class="annual-fee">$795/yr</span>
+            <button class="header-button add-button add-benefit-button" id="addBenefitButton" type="button" aria-label="Add a benefit" aria-expanded="false">+</button>
+            <button class="header-button edit-benefits-button" id="editButton" type="button" aria-pressed="false">Edit</button>
+          </div>
+        </div>
+
+        <form class="add-benefit-panel" id="addBenefitForm" hidden>
+          <div class="add-benefit-grid">
+            <input id="benefitName" name="name" type="text" placeholder="Benefit name" aria-label="Benefit name" required>
+            <input id="benefitDetail" name="detail" type="text" placeholder="Short explanation" aria-label="Benefit explanation" required>
+            <select id="benefitGroup" name="group" aria-label="Benefit category">
+              <option>Rewards</option>
+              <option>Travel</option>
+              <option>Dining &amp; lifestyle</option>
+              <option>Travel protection</option>
+              <option>Purchases &amp; points</option>
+              <option>After $75,000 annual spend</option>
+            </select>
+          </div>
+          <div class="add-benefit-actions">
+            <button class="header-button" id="cancelBenefitButton" type="button">Cancel</button>
+            <button class="header-button" type="submit">Add benefit</button>
+          </div>
+        </form>
+
+        <div class="perk-groups">
+          <section class="perk-group" aria-labelledby="rewards-heading">
+            <h4 id="rewards-heading">Rewards</h4>
+            <ul class="perk-list">
+              <li class="perk"><span class="perk-name">8× Chase Travel</span><span class="perk-detail">Earn 8 points per dollar on purchases through Chase Travel, including The Edit.</span></li>
+              <li class="perk"><span class="perk-name">4× direct flights</span><span class="perk-detail">Earn 4 points per dollar on flights booked directly with airlines.</span></li>
+              <li class="perk"><span class="perk-name">4× direct hotels</span><span class="perk-detail">Earn 4 points per dollar on hotels booked directly.</span></li>
+              <li class="perk"><span class="perk-name">3× dining</span><span class="perk-detail">Earn 3 points per dollar on dining worldwide, including eligible takeout and delivery.</span></li>
+              <li class="perk"><span class="perk-name">1× everything else</span><span class="perk-detail">Earn 1 point per dollar on all other eligible purchases.</span></li>
+              <li class="perk"><span class="perk-name">5× Lyft</span><span class="perk-detail">Earn 5 points per dollar on eligible Lyft rides through September 30, 2027.</span></li>
+              <li class="perk"><span class="perk-name">10× Peloton</span><span class="perk-detail">Earn 10 points per dollar on eligible Peloton equipment and accessory purchases over $150 through December 31, 2027.</span></li>
+            </ul>
+          </section>
+
+          <section class="perk-group" aria-labelledby="travel-heading">
+            <h4 id="travel-heading">Travel</h4>
+            <ul class="perk-list">
+              <li class="perk"><span class="perk-name">$300 travel credit</span><span class="perk-detail">Automatic statement credits for eligible travel purchases each account anniversary year.</span></li>
+              <li class="perk"><span class="perk-name">$500 The Edit credit</span><span class="perk-detail">Up to $250 per prepaid booking, twice per year. Each stay requires at least two nights.</span></li>
+              <li class="perk"><span class="perk-name">The Edit hotel benefits</span><span class="perk-detail">Property credit, daily breakfast for two, possible room upgrade, and other benefits on eligible stays.</span></li>
+              <li class="perk"><span class="perk-name">$250 select-hotel credit</span><span class="perk-detail">For eligible prepaid Chase Travel stays of two nights or more at participating hotel brands through December 31, 2026.</span></li>
+              <li class="perk"><span class="perk-name">IHG Platinum Elite</span><span class="perk-detail">Complimentary IHG One Rewards Platinum Elite status through December 31, 2027. Activation required.</span></li>
+              <li class="perk"><span class="perk-name">Airport lounge access</span><span class="perk-detail">Chase Sapphire Lounges and 1,300+ Priority Pass lounges worldwide, with up to two complimentary guests.</span></li>
+              <li class="perk"><span class="perk-name">Air Canada lounges</span><span class="perk-detail">Access to select Maple Leaf Lounges and Air Canada Cafés with an eligible boarding pass.</span></li>
+              <li class="perk"><span class="perk-name">Trusted Traveler credit</span><span class="perk-detail">Up to $120 every four years for Global Entry, TSA PreCheck, or NEXUS application fees.</span></li>
+              <li class="perk"><span class="perk-name">Reserve Travel Designers</span><span class="perk-detail">Personalized itinerary planning and booking, valued by Chase at up to $300 per trip.</span></li>
+              <li class="perk"><span class="perk-name">No foreign transaction fees</span><span class="perk-detail">No extra card fee on purchases made outside the United States.</span></li>
+            </ul>
+          </section>
+
+          <section class="perk-group" aria-labelledby="lifestyle-heading">
+            <h4 id="lifestyle-heading">Dining &amp; lifestyle</h4>
+            <ul class="perk-list">
+              <li class="perk"><span class="perk-name">$300 dining credit</span><span class="perk-detail">Up to $150 from January through June and $150 from July through December at Sapphire Exclusive Tables restaurants.</span></li>
+              <li class="perk"><span class="perk-name">Apple TV &amp; Apple Music</span><span class="perk-detail">Complimentary subscriptions through June 22, 2027; Chase lists an annual value of $288.</span></li>
+              <li class="perk"><span class="perk-name">DashPass membership</span><span class="perk-detail">Complimentary 12-month DoorDash DashPass membership when activated by December 31, 2027.</span></li>
+              <li class="perk"><span class="perk-name">$300 DoorDash promos</span><span class="perk-detail">Up to $25 per month: one $5 restaurant promo and two $10 non-restaurant promos through December 31, 2027.</span></li>
+              <li class="perk"><span class="perk-name">$300 StubHub credit</span><span class="perk-detail">Up to $150 from January through June and $150 from July through December through December 31, 2027. Activation required.</span></li>
+              <li class="perk"><span class="perk-name">$120 Lyft credit</span><span class="perk-detail">A $10 monthly in-app ride credit through September 30, 2027.</span></li>
+              <li class="perk"><span class="perk-name">$120 Peloton credit</span><span class="perk-detail">Up to $10 per month toward eligible Peloton memberships through December 31, 2027. Activation required.</span></li>
+              <li class="perk"><span class="perk-name">Events &amp; experiences</span><span class="perk-detail">Access to select ticket packages and private experiences across travel, dining, music, film, entertainment, and the arts.</span></li>
+            </ul>
+          </section>
+
+          <section class="perk-group" aria-labelledby="protection-heading">
+            <h4 id="protection-heading">Travel protection</h4>
+            <ul class="perk-list">
+              <li class="perk"><span class="perk-name">Primary rental coverage</span><span class="perk-detail">Up to $75,000 for theft and collision damage to most eligible rental vehicles.</span></li>
+              <li class="perk"><span class="perk-name">Trip cancellation &amp; interruption</span><span class="perk-detail">Up to $10,000 per covered traveler and $20,000 per trip for eligible prepaid, nonrefundable expenses.</span></li>
+              <li class="perk"><span class="perk-name">Trip delay reimbursement</span><span class="perk-detail">Up to $500 per covered traveler when a common-carrier delay exceeds six hours or requires an overnight stay.</span></li>
+              <li class="perk"><span class="perk-name">Travel accident insurance</span><span class="perk-detail">Up to $1,000,000 in accidental death or dismemberment coverage on eligible transportation.</span></li>
+              <li class="perk"><span class="perk-name">Lost luggage</span><span class="perk-detail">Up to $3,000 per covered traveler for eligible checked or carry-on baggage.</span></li>
+              <li class="perk"><span class="perk-name">Baggage delay</span><span class="perk-detail">Up to $100 per day for five days for essentials when baggage is delayed more than six hours.</span></li>
+              <li class="perk"><span class="perk-name">Emergency evacuation</span><span class="perk-detail">Up to $100,000 for covered medical services and transportation on eligible trips.</span></li>
+              <li class="perk"><span class="perk-name">Emergency medical &amp; dental</span><span class="perk-detail">Up to $2,500 in eligible expenses, subject to a $50 deductible, when traveling 100+ miles from home.</span></li>
+              <li class="perk"><span class="perk-name">Roadside assistance</span><span class="perk-detail">Up to $50 per incident, four times per year, for eligible towing, battery, tire, locksmith, or fuel service.</span></li>
+              <li class="perk"><span class="perk-name">Travel assistance</span><span class="perk-detail">Legal and medical referrals plus emergency assistance while traveling; third-party service costs remain yours.</span></li>
+            </ul>
+          </section>
+
+          <section class="perk-group" aria-labelledby="purchase-heading">
+            <h4 id="purchase-heading">Purchases &amp; points</h4>
+            <ul class="perk-list">
+              <li class="perk"><span class="perk-name">Purchase protection</span><span class="perk-detail">Eligible new purchases are covered against damage or theft for 120 days, up to $10,000 per item.</span></li>
+              <li class="perk"><span class="perk-name">Return protection</span><span class="perk-detail">Up to $500 per eligible item and $1,000 per 12-month period when a store will not accept a return within 90 days.</span></li>
+              <li class="perk"><span class="perk-name">Extended warranty</span><span class="perk-detail">Adds one year to eligible U.S. manufacturer warranties of three years or less.</span></li>
+              <li class="perk"><span class="perk-name">Points Boost</span><span class="perk-detail">Points can be worth up to 2× on select hotels and flights booked through Chase Travel.</span></li>
+              <li class="perk"><span class="perk-name">1:1 point transfers</span><span class="perk-detail">Transfer Ultimate Rewards points to participating airline and hotel loyalty programs.</span></li>
+              <li class="perk"><span class="perk-name">No blackout dates</span><span class="perk-detail">Book available flights and hotel rooms through Chase Travel without blackout dates.</span></li>
+              <li class="perk"><span class="perk-name">Points do not expire</span><span class="perk-detail">Ultimate Rewards points remain active while the account stays open and in good standing.</span></li>
+              <li class="perk"><span class="perk-name">Account protection</span><span class="perk-detail">24/7 fraud monitoring, zero-liability protection for unauthorized charges, and chip-enabled security.</span></li>
+              <li class="perk"><span class="perk-name">Dedicated service</span><span class="perk-detail">Access to a Sapphire Reserve customer-service team seven days a week.</span></li>
+            </ul>
+          </section>
+
+          <section class="perk-group" aria-labelledby="spend-heading">
+            <h4 id="spend-heading">After $75,000 annual spend</h4>
+            <ul class="perk-list">
+              <li class="perk"><span class="perk-name">World of Hyatt Explorist</span><span class="perk-detail">Explorist status after meeting the annual spending threshold and activating the benefit.</span></li>
+              <li class="perk"><span class="perk-name">IHG Diamond Elite</span><span class="perk-detail">IHG One Rewards Diamond Elite status after meeting the annual spending threshold.</span></li>
+              <li class="perk"><span class="perk-name">$250 Shops at Chase credit</span><span class="perk-detail">Statement credits for eligible purchases at The Shops at Chase.</span></li>
+              <li class="perk"><span class="perk-name">$500 Southwest credit</span><span class="perk-detail">Statement credits for eligible Southwest Airlines purchases made through Chase Travel.</span></li>
+              <li class="perk"><span class="perk-name">Southwest A-List</span><span class="perk-detail">Rapid Rewards A-List status after meeting the annual spending threshold.</span></li>
+            </ul>
+          </section>
+        </div>
+
+        <p class="source-note">Benefits, eligibility, activation requirements, and end dates can change. Verified against the <a href="https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve" target="_blank" rel="noreferrer">official Chase Sapphire Reserve page</a>.</p>
+      </article>
+      </div>
+    </section>
+    </div>
+  </main>
+  <script>
+    const useStorageKey = "rodrigo-perks-in-use";
+    const hiddenStorageKey = "rodrigo-perks-hidden";
+    const customStorageKey = "rodrigo-perks-custom";
+    const structureStorageKey = "rodrigo-perks-structure";
+    const page = document.querySelector("#page");
+    const groupsContainer = document.querySelector("#groups");
+    const editPageButton = document.querySelector("#editPageButton");
+    const addGroupButton = document.querySelector("#addGroupButton");
+    const addForm = document.querySelector("#addBenefitForm");
+    const cancelButton = document.querySelector("#cancelBenefitButton");
+
+    const readStorage = (key, fallback) => {
+      try {
+        return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+      } catch (_) {
+        return fallback;
+      }
+    };
+
+    const writeStorage = (key, value) => {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (_) {
+        // Controls remain usable for this visit when storage is unavailable.
+      }
+    };
+
+    const slugify = (value) => value
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    const savedPerks = readStorage(useStorageKey, {});
+    const hiddenPerks = readStorage(hiddenStorageKey, {});
+    const customPerks = readStorage(customStorageKey, []);
+    const structure = readStorage(structureStorageKey, {
+      groupNames: { cards: "Cards" },
+      customGroups: [],
+      subgroups: [],
+      subgroupGroups: { "chase-sapphire-reserve": "cards" }
+    });
+
+    structure.groupNames ||= { cards: "Cards" };
+    structure.customGroups ||= [];
+    structure.subgroups ||= [];
+    structure.subgroupGroups ||= { "chase-sapphire-reserve": "cards" };
+
+    const eyeIcon = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+        <circle cx="12" cy="12" r="2.5"></circle>
+      </svg>`;
+
+    const eyeOffIcon = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m3 3 18 18"></path>
+        <path d="M10.6 6.2A11.8 11.8 0 0 1 12 6c6 0 9.5 6 9.5 6a16.7 16.7 0 0 1-2.1 2.8"></path>
+        <path d="M6.2 6.2C3.8 8 2.5 12 2.5 12s3.5 6 9.5 6a9.8 9.8 0 0 0 3.1-.5"></path>
+      </svg>`;
+
+    const makePerkId = (perk) => {
+      const groupName = perk.closest(".perk-group").querySelector("h4").textContent.trim();
+      const perkName = perk.querySelector(".perk-name").textContent.trim();
+      return perk.dataset.perkId || slugify(`${groupName}-${perkName}`);
+    };
+
+    const wirePerk = (perk) => {
+      if (perk.dataset.ready === "true") return;
+
+      const perkName = perk.querySelector(".perk-name").textContent.trim();
+      const perkId = makePerkId(perk);
+      perk.dataset.perkId = perkId;
+      perk.dataset.ready = "true";
+      perk.classList.toggle("is-hidden", hiddenPerks[perkId] === true);
+
+      const controls = document.createElement("div");
+      controls.className = "perk-controls";
+
+      const visibilityButton = document.createElement("button");
+      visibilityButton.type = "button";
+      visibilityButton.className = "visibility-toggle";
+
+      const updateVisibilityButton = () => {
+        const isHidden = perk.classList.contains("is-hidden");
+        visibilityButton.innerHTML = isHidden ? eyeOffIcon : eyeIcon;
+        visibilityButton.setAttribute("aria-label", `${isHidden ? "Show" : "Hide"} ${perkName}`);
+        visibilityButton.title = isHidden ? "Show benefit" : "Hide benefit";
+      };
+
+      visibilityButton.addEventListener("click", () => {
+        const isHidden = perk.classList.toggle("is-hidden");
+        hiddenPerks[perkId] = isHidden;
+        writeStorage(hiddenStorageKey, hiddenPerks);
+        updateVisibilityButton();
+      });
+
+      updateVisibilityButton();
+
+      const label = document.createElement("label");
+      label.className = "perk-toggle";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = savedPerks[perkId] === true;
+      checkbox.setAttribute("aria-label", `Using ${perkName}`);
+
+      const track = document.createElement("span");
+      track.className = "switch-track";
+      track.setAttribute("aria-hidden", "true");
+
+      checkbox.addEventListener("change", () => {
+        savedPerks[perkId] = checkbox.checked;
+        writeStorage(useStorageKey, savedPerks);
+      });
+
+      label.append(checkbox, track);
+      controls.append(visibilityButton, label);
+      perk.append(controls);
+    };
+
+    const createButton = (text, className, label) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `header-button ${className}`;
+      button.textContent = text;
+      if (label) button.setAttribute("aria-label", label);
+      return button;
+    };
+
+    const createPerkElement = (benefit) => {
+      const perk = document.createElement("li");
+      perk.className = "perk";
+      perk.dataset.perkId = benefit.id;
+
+      const name = document.createElement("span");
+      name.className = "perk-name";
+      name.textContent = benefit.name;
+
+      const detail = document.createElement("span");
+      detail.className = "perk-detail";
+      detail.textContent = benefit.detail;
+
+      perk.append(name, detail);
+      return perk;
+    };
+
+    const findGroup = (groupName) => Array.from(document.querySelectorAll(".perk-group"))
+      .find((group) => group.querySelector("h4").textContent.trim() === groupName);
+
+    const renderCustomPerk = (benefit) => {
+      const group = findGroup(benefit.group);
+      if (!group) return;
+      const perk = createPerkElement(benefit);
+      group.querySelector(".perk-list").append(perk);
+      wirePerk(perk);
+    };
+
+    const formatCost = (cost) => {
+      const value = String(cost || "").trim();
+      if (!value) return "No annual fee";
+      if (/^\d+(\.\d{1,2})?$/.test(value)) return `$${value}/yr`;
+      return value;
+    };
+
+    const makeSubgroup = (subgroup) => {
+      const card = document.createElement("article");
+      card.className = "card subgroup";
+      card.dataset.subgroupId = subgroup.id;
+
+      const cardTop = document.createElement("div");
+      cardTop.className = "card-top";
+
+      const title = document.createElement("h3");
+      title.textContent = subgroup.name;
+
+      const actions = document.createElement("div");
+      actions.className = "card-actions";
+
+      const fee = document.createElement("span");
+      fee.className = "annual-fee";
+      fee.textContent = formatCost(subgroup.cost);
+
+      const addBenefit = createButton("+", "add-button add-benefit-button", `Add a benefit to ${subgroup.name}`);
+      const editBenefits = createButton("Edit", "edit-benefits-button", `Edit benefits for ${subgroup.name}`);
+      editBenefits.setAttribute("aria-pressed", "false");
+      actions.append(fee, addBenefit, editBenefits);
+      cardTop.append(title, actions);
+
+      const perkGroups = document.createElement("div");
+      perkGroups.className = "perk-groups";
+      const perkGroup = document.createElement("section");
+      perkGroup.className = "perk-group";
+      const heading = document.createElement("h4");
+      heading.textContent = "Benefits";
+      const list = document.createElement("ul");
+      list.className = "perk-list";
+      perkGroup.append(heading, list);
+      perkGroups.append(perkGroup);
+      card.append(cardTop, perkGroups);
+
+      (subgroup.benefits || []).forEach((benefit) => {
+        const perk = createPerkElement(benefit);
+        list.append(perk);
+        wirePerk(perk);
+      });
+
+      return card;
+    };
+
+    const makeGroup = (group) => {
+      const section = document.createElement("section");
+      section.className = "cards group";
+      section.dataset.groupId = group.id;
+
+      const head = document.createElement("div");
+      head.className = "group-head";
+      const heading = document.createElement("h2");
+      heading.textContent = group.name;
+      const actions = document.createElement("div");
+      actions.className = "group-actions";
+      actions.append(
+        createButton("+", "add-button add-subgroup-button", `Add a subgroup to ${group.name}`),
+        createButton("Edit", "edit-group-button", `Edit ${group.name}`)
+      );
+      const subgroupList = document.createElement("div");
+      subgroupList.className = "subgroup-list";
+      head.append(heading, actions);
+      section.append(head, subgroupList);
+      return section;
+    };
+
+    const getGroup = (groupId) => Array.from(document.querySelectorAll(".group"))
+      .find((group) => group.dataset.groupId === groupId);
+
+    document.querySelector('[data-group-id="cards"] h2').textContent = structure.groupNames.cards || "Cards";
+    structure.customGroups.forEach((group) => groupsContainer.append(makeGroup(group)));
+    structure.subgroups.forEach((subgroup) => {
+      const group = getGroup(subgroup.groupId);
+      if (group) group.querySelector(".subgroup-list").append(makeSubgroup(subgroup));
+    });
+
+    const builtInSubgroup = document.querySelector('[data-subgroup-id="chase-sapphire-reserve"]');
+    const builtInGroup = getGroup(structure.subgroupGroups["chase-sapphire-reserve"] || "cards") || getGroup("cards");
+    builtInGroup.querySelector(".subgroup-list").append(builtInSubgroup);
+
+    customPerks.forEach(renderCustomPerk);
+    document.querySelectorAll(".perk").forEach(wirePerk);
+
+    const closeAddForm = () => {
+      addForm.hidden = true;
+      document.querySelector("#addBenefitButton").setAttribute("aria-expanded", "false");
+    };
+
+    const openBuiltInBenefitForm = () => {
+      const willOpen = addForm.hidden;
+      addForm.hidden = !willOpen;
+      document.querySelector("#addBenefitButton").setAttribute("aria-expanded", String(willOpen));
+      if (willOpen) document.querySelector("#benefitName").focus();
+    };
+
+    cancelButton.addEventListener("click", closeAddForm);
+
+    addForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const formData = new FormData(addForm);
+      const name = formData.get("name").trim();
+      const detail = formData.get("detail").trim();
+      const group = formData.get("group");
+      if (!name || !detail) return;
+
+      const benefit = {
+        id: `custom-${Date.now()}-${slugify(name)}`,
+        name,
+        detail,
+        group
+      };
+
+      customPerks.push(benefit);
+      writeStorage(customStorageKey, customPerks);
+      renderCustomPerk(benefit);
+      addForm.reset();
+      closeAddForm();
+    });
+
+    const setStructureEditing = (isEditing) => {
+      page.classList.toggle("is-structure-editing", isEditing);
+      editPageButton.textContent = isEditing ? "Done" : "Edit";
+      editPageButton.setAttribute("aria-pressed", String(isEditing));
+      document.querySelectorAll(".subgroup").forEach((subgroup) => {
+        subgroup.draggable = isEditing;
+      });
+
+      if (!isEditing) {
+        closeAddForm();
+        document.querySelectorAll(".is-dragging, .is-drag-target").forEach((element) => {
+          element.classList.remove("is-dragging", "is-drag-target");
+        });
+        document.querySelectorAll(".subgroup.is-editing").forEach((subgroup) => subgroup.classList.remove("is-editing"));
+        document.querySelectorAll(".edit-benefits-button").forEach((button) => {
+          button.textContent = "Edit";
+          button.setAttribute("aria-pressed", "false");
+        });
+      }
+    };
+
+    editPageButton.addEventListener("click", () => {
+      setStructureEditing(!page.classList.contains("is-structure-editing"));
+    });
+
+    addGroupButton.addEventListener("click", () => {
+      const name = window.prompt("Group name", "Memberships");
+      if (!name || !name.trim()) return;
+      const group = {
+        id: `group-${Date.now()}-${slugify(name)}`,
+        name: name.trim()
+      };
+      structure.customGroups.push(group);
+      writeStorage(structureStorageKey, structure);
+      groupsContainer.append(makeGroup(group));
+    });
+
+    groupsContainer.addEventListener("click", (event) => {
+      const groupElement = event.target.closest(".group");
+      const subgroupElement = event.target.closest(".subgroup");
+
+      if (event.target.closest(".add-subgroup-button") && groupElement) {
+        const groupName = groupElement.querySelector("h2").textContent.trim();
+        const name = window.prompt(`Add a subgroup to ${groupName}`, "");
+        if (!name || !name.trim()) return;
+        const cost = window.prompt("Annual cost (optional)", "");
+        const subgroup = {
+          id: `subgroup-${Date.now()}-${slugify(name)}`,
+          groupId: groupElement.dataset.groupId,
+          name: name.trim(),
+          cost: cost === null ? "" : cost.trim(),
+          benefits: []
+        };
+        structure.subgroups.push(subgroup);
+        writeStorage(structureStorageKey, structure);
+        const subgroupElement = makeSubgroup(subgroup);
+        subgroupElement.draggable = true;
+        groupElement.querySelector(".subgroup-list").append(subgroupElement);
+        return;
+      }
+
+      if (event.target.closest(".edit-group-button") && groupElement) {
+        const heading = groupElement.querySelector("h2");
+        const name = window.prompt("Group name", heading.textContent.trim());
+        if (!name || !name.trim()) return;
+        heading.textContent = name.trim();
+        if (groupElement.dataset.groupId === "cards") {
+          structure.groupNames.cards = name.trim();
+        } else {
+          const group = structure.customGroups.find((item) => item.id === groupElement.dataset.groupId);
+          if (group) group.name = name.trim();
+        }
+        writeStorage(structureStorageKey, structure);
+        return;
+      }
+
+      if (event.target.closest(".edit-benefits-button") && subgroupElement) {
+        const button = event.target.closest(".edit-benefits-button");
+        const isEditing = subgroupElement.classList.toggle("is-editing");
+        button.textContent = isEditing ? "Done" : "Edit";
+        button.setAttribute("aria-pressed", String(isEditing));
+        return;
+      }
+
+      if (event.target.closest(".add-benefit-button") && subgroupElement) {
+        if (subgroupElement.dataset.subgroupId === "chase-sapphire-reserve") {
+          openBuiltInBenefitForm();
+          return;
+        }
+
+        const subgroup = structure.subgroups.find((item) => item.id === subgroupElement.dataset.subgroupId);
+        if (!subgroup) return;
+        const name = window.prompt(`Benefit name for ${subgroup.name}`, "");
+        if (!name || !name.trim()) return;
+        const detail = window.prompt("Short explanation", "");
+        if (!detail || !detail.trim()) return;
+        const benefit = {
+          id: `custom-${Date.now()}-${slugify(name)}`,
+          name: name.trim(),
+          detail: detail.trim()
+        };
+        subgroup.benefits ||= [];
+        subgroup.benefits.push(benefit);
+        writeStorage(structureStorageKey, structure);
+        const perk = createPerkElement(benefit);
+        subgroupElement.querySelector(".perk-list").append(perk);
+        wirePerk(perk);
+      }
+    });
+
+    let draggedSubgroupId = null;
+
+    groupsContainer.addEventListener("dragstart", (event) => {
+      const subgroup = event.target.closest(".subgroup");
+      if (!subgroup || !page.classList.contains("is-structure-editing")) {
+        event.preventDefault();
+        return;
+      }
+
+      draggedSubgroupId = subgroup.dataset.subgroupId;
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", draggedSubgroupId);
+      requestAnimationFrame(() => subgroup.classList.add("is-dragging"));
+    });
+
+    groupsContainer.addEventListener("dragover", (event) => {
+      if (!draggedSubgroupId || !page.classList.contains("is-structure-editing")) return;
+      const targetList = event.target.closest(".subgroup-list");
+      if (!targetList) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      document.querySelectorAll(".subgroup-list.is-drag-target").forEach((list) => {
+        if (list !== targetList) list.classList.remove("is-drag-target");
+      });
+      targetList.classList.add("is-drag-target");
+    });
+
+    groupsContainer.addEventListener("dragleave", (event) => {
+      const targetList = event.target.closest(".subgroup-list");
+      if (targetList && !targetList.contains(event.relatedTarget)) {
+        targetList.classList.remove("is-drag-target");
+      }
+    });
+
+    groupsContainer.addEventListener("drop", (event) => {
+      if (!draggedSubgroupId || !page.classList.contains("is-structure-editing")) return;
+      const targetList = event.target.closest(".subgroup-list");
+      const targetGroup = targetList?.closest(".group");
+      const subgroup = Array.from(document.querySelectorAll(".subgroup"))
+        .find((item) => item.dataset.subgroupId === draggedSubgroupId);
+      if (!targetList || !targetGroup || !subgroup) return;
+
+      event.preventDefault();
+      targetList.append(subgroup);
+      targetList.classList.remove("is-drag-target");
+
+      if (draggedSubgroupId === "chase-sapphire-reserve") {
+        structure.subgroupGroups[draggedSubgroupId] = targetGroup.dataset.groupId;
+      } else {
+        const savedSubgroup = structure.subgroups.find((item) => item.id === draggedSubgroupId);
+        if (savedSubgroup) savedSubgroup.groupId = targetGroup.dataset.groupId;
+      }
+      writeStorage(structureStorageKey, structure);
+    });
+
+    groupsContainer.addEventListener("dragend", () => {
+      document.querySelectorAll(".is-dragging, .is-drag-target").forEach((element) => {
+        element.classList.remove("is-dragging", "is-drag-target");
+      });
+      draggedSubgroupId = null;
+    });
+  </script>
+</body>
+</html>
